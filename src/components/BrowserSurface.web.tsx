@@ -12,12 +12,11 @@ export default function BrowserSurface({ platform, onClose }: BrowserSurfaceProp
   const html = useMemo(() => demoHTML(platform.id).replace('</head>', `<script>${buildFilterScript(platform.id, true)}</script></head>`), [platform.id]);
   return <View style={styles.container}>
     <View style={styles.header}><IconButton icon="x" label="Back to Quiet home" onPress={onClose} />
-      <View style={styles.heading}><Text style={styles.title}>{platform.name}</Text><Text style={styles.subtitle}>Local browser preview</Text></View>
+      <View style={styles.heading}><Text style={styles.title}>{platform.name} website</Text><Text style={styles.subtitle}>Local browser preview</Text></View>
       <IconButton icon="shield" label="Filter status and website help" onPress={() => setShowHelp(value => !value)} />
     </View>
     <View style={styles.notice}><Icon name="info" size={16} color={colors.amber} /><Text style={styles.noticeText}>Sample content only. Real sign-ins require the iPhone app.</Text></View>
-    {showHelp && <View style={styles.help}><Text style={styles.helpTitle}>A quieter {platform.name}.</Text><Text style={styles.helpText}>{platform.description}</Text>
-      <Text style={styles.helpText}>{platform.limitation ?? 'This preview demonstrates filtering. Platform sign-ins and native features must be tested on your iPhone.'}</Text>
+    {showHelp && <View style={styles.help}><Text style={styles.helpTitle}>YouTube Shorts filter</Text><Text style={styles.helpText}>{platform.description}</Text>
       <Pressable accessibilityRole="button" onPress={() => setShowHelp(false)} style={styles.close}><Text style={styles.helpTitle}>Close help</Text></Pressable>
     </View>}
     {React.createElement('iframe', { key: reload, title: `${platform.name} filtering demo`, srcDoc: html, sandbox: 'allow-scripts allow-same-origin', style: { width: '100%', flex: 1, border: 0, background: 'white' } })}

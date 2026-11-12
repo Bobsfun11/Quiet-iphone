@@ -2,21 +2,21 @@
   "expo": {
     "name": "Quiet",
     "slug": "quiet-social",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "quiet-social",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quietsocial.personal",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Allow camera access only when you choose to capture a photo or video on a social website.",
-        "NSMicrophoneUsageDescription": "Allow microphone access only when you choose to record or call on a social website.",
-        "NSPhotoLibraryUsageDescription": "Choose a photo or video to share on a social website.",
-        "NSPhotoLibraryAddUsageDescription": "Save an image when you choose to download it from a social website."
+        "NSCameraUsageDescription": "Allow camera access only when you choose to capture a photo or video on YouTube.",
+        "NSMicrophoneUsageDescription": "Allow microphone access only when you choose to record on YouTube.",
+        "NSPhotoLibraryUsageDescription": "Choose a photo or video to share on YouTube.",
+        "NSPhotoLibraryAddUsageDescription": "Save a file when you choose to download it from YouTube."
       }
     },
     "plugins": [
@@ -25,7 +25,11 @@
         {
           "backgroundColor": "#F6F5EF",
           "image": "./assets/splash-icon.png",
-          "imageWidth": 120
+          "imageWidth": 120,
+          "dark": {
+            "backgroundColor": "#151A17",
+            "image": "./assets/splash-icon.png"
+          }
         }
       ],
       "expo-font"

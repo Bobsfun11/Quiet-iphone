@@ -32,7 +32,7 @@ export function PrimaryButton({ title, onPress, icon = 'arrow-right' }: { title:
     onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} pressRetentionOffset={16}>
     <Animated.View style={[styles.primary, { opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed && !reduced ? 0.97 : 1 }],
       transitionProperty: ['transform', 'opacity'], transitionDuration: reduced ? 0 : motion.press, transitionTimingFunction: pressEasing }]}>
-      <Text style={styles.primaryText}>{title}</Text><Icon name={icon} color={colors.white} size={19} />
+      <Text style={styles.primaryText}>{title}</Text><Icon name={icon} color={colors.onAccent} size={19} />
     </Animated.View>
   </Pressable>;
 }
@@ -40,7 +40,7 @@ export function PrimaryButton({ title, onPress, icon = 'arrow-right' }: { title:
 export function Brand({ small = false }: { small?: boolean }) {
   return <View style={styles.brand}><View style={[styles.mark, small && { width: 30, height: 30, borderRadius: 11 }]}>
     <View style={styles.markLine} /><View style={[styles.markLine, { height: 15 }]} /><View style={[styles.markLine, { height: 9 }]} />
-  </View><Text style={[styles.brandText, small && { fontSize: 22 }]}>quiet<Text style={{ color: '#78957F' }}>.</Text></Text></View>;
+  </View><Text style={[styles.brandText, small && { fontSize: 22 }]}>quiet<Text style={{ color: colors.sage }}>.</Text></Text></View>;
 }
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -50,10 +50,10 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   iconButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   primary: { minHeight: 58, backgroundColor: colors.green, borderRadius: 20, borderCurve: 'continuous', paddingHorizontal: 22, paddingVertical: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '600' },
+  primaryText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandText: { fontSize: 28, fontWeight: '700', letterSpacing: -1.3, color: colors.ink },
   mark: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, width: 36, height: 36, backgroundColor: colors.green, borderRadius: 12 },
-  markLine: { width: 3, height: 21, borderRadius: 2, backgroundColor: '#E8EFCE' },
+  markLine: { width: 3, height: 21, borderRadius: 2, backgroundColor: colors.onAccent },
   eyebrow: { ...typography.eyebrow, color: colors.muted },
 });

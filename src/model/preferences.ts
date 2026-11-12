@@ -1,16 +1,15 @@
-import { PLATFORMS, type PlatformId } from './platforms';
+import type { PlatformId } from './platforms';
 
 export type Preferences = {
   version: 1;
   onboarded: boolean;
-  showTips: boolean;
   launchInInbox: boolean;
   desktop: Record<PlatformId, boolean>;
 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  version: 1, onboarded: false, showTips: true, launchInInbox: false,
-  desktop: { instagram: false, youtube: false, tiktok: true, snapchat: true },
+  version: 1, onboarded: false, launchInInbox: false,
+  desktop: { youtube: false },
 };
 
 export function freshPreferences(): Preferences {
@@ -25,11 +24,8 @@ export function parsePreferences(raw: string | null): Preferences {
     return {
       version: 1,
       onboarded: value.onboarded === true,
-      showTips: typeof value.showTips === 'boolean' ? value.showTips : true,
       launchInInbox: value.launchInInbox === true,
-      desktop: Object.fromEntries(PLATFORMS.map(p => [p.id,
-        typeof value.desktop?.[p.id] === 'boolean' ? value.desktop[p.id] : DEFAULT_PREFERENCES.desktop[p.id],
-      ])) as Preferences['desktop'],
+      desktop: { youtube: value.desktop?.youtube === true },
     };
   } catch { return freshPreferences(); }
 }

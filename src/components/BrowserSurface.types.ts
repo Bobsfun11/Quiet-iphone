@@ -4,7 +4,6 @@ export type BrowserSurfaceProps = {
   platform: SocialPlatform;
   desktop: boolean;
   launchInInbox: boolean;
-  showTips: boolean;
   onClose: () => void;
   onToggleDesktop: () => void;
 };

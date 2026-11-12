@@ -5,7 +5,7 @@ import { getPlatform, type PlatformId } from '../model/platforms';
 export function buildFilterScript(platformId: PlatformId, preview = false): string {
   const platform = getPlatform(platformId);
   const config = JSON.stringify({
-    id: platform.id, domains: platform.domains, patterns: platform.blockedPaths,
+    home: platform.home, domains: platform.domains, patterns: platform.blockedPaths,
     selectors: platform.selectors, preview,
   }).replace(/</g, '\\u003c');
   return String.raw`
@@ -34,7 +34,9 @@ export function buildFilterScript(platformId: PlatformId, preview = false): stri
     '#' + overlayId + '{position:fixed!important;inset:0!important;z-index:2147483647!important;' +
     'display:flex!important;align-items:center!important;justify-content:center!important;' +
     'background:#f6f5ef!important;color:#20372e!important;font-family:system-ui,sans-serif!important;padding:28px!important;}' +
-    '#' + overlayId + ' button{background:#254b3b;color:white;border:0;border-radius:24px;padding:14px 24px;font:inherit;margin-top:16px;cursor:pointer;}';
+    '#' + overlayId + ' button{background:#254b3b;color:white;border:0;border-radius:24px;padding:14px 24px;font:inherit;margin-top:16px;cursor:pointer;}' +
+    '@media(prefers-color-scheme:dark){#' + overlayId + '{background:#151a17!important;color:#eef2e9!important;}' +
+    '#' + overlayId + ' button{background:#a5ceb1;color:#172a1e;}}';
   function send(type, count) {
     try {
       if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({channel:'quiet-v1',type:type,count:count}));
@@ -80,15 +82,12 @@ export function buildFilterScript(platformId: PlatformId, preview = false): stri
     title.textContent = 'A little space to breathe.';
     title.style.cssText = 'font-size:27px;line-height:1.2;font-weight:600';
     var copy = document.createElement('p');
-    copy.textContent = 'This short-video feed is kept out of Quiet. Your conversations and regular browsing are still here.';
+    copy.textContent = 'Search, subscriptions and regular videos are available in Quiet.';
     var button = document.createElement('button');
     button.textContent = 'Back to what matters';
     button.addEventListener('click', function() {
       if (blocked(location.href)) {
-        var fallback = config.id === 'tiktok' ? 'https://www.tiktok.com/messages' :
-          config.id === 'snapchat' ? 'https://web.snapchat.com/' :
-          config.id === 'youtube' ? 'https://m.youtube.com/' : 'https://www.instagram.com/';
-        location.replace(!blocked(lastAllowed) ? lastAllowed : fallback);
+        location.replace(!blocked(lastAllowed) ? lastAllowed : config.home);
       } else dismissGuard();
     });
     card.append(title, copy, button);
@@ -119,7 +118,7 @@ export function buildFilterScript(platformId: PlatformId, preview = false): stri
     // navigation markup changes without searching conversation text.
     document.querySelectorAll('a[href]').forEach(function(link) {
       if (!blocked(link.href)) return;
-      var item = config.id === 'youtube' ? link.closest('ytd-rich-item-renderer,ytm-rich-item-renderer,ytd-video-renderer,ytm-video-with-context-renderer,ytm-reel-item-renderer,yt-shorts-lockup-view-model,ytm-shorts-lockup-view-model') : null;
+      var item = link.closest('ytd-rich-item-renderer,ytm-rich-item-renderer,ytd-video-renderer,ytm-video-with-context-renderer,ytm-reel-item-renderer,yt-shorts-lockup-view-model,ytm-shorts-lockup-view-model');
       hide(item || link);
     });
     if (count) send('hidden', Math.min(count, 10000));

@@ -11,7 +11,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { Icon, IconButton, PrimaryButton } from './Primitives';
 import type { BrowserSurfaceProps } from './BrowserSurface.types';
 
-export default function BrowserSurface({ platform, desktop, launchInInbox, showTips, onClose, onToggleDesktop }: BrowserSurfaceProps) {
+export default function BrowserSurface({ platform, desktop, launchInInbox, onClose, onToggleDesktop }: BrowserSurfaceProps) {
   const web = useRef<WebView<{}>>(null);
   const reducedMotion = useReducedMotion();
   const entry = launchInInbox && platform.inbox ? platform.inbox : platform.home;
@@ -74,15 +74,12 @@ export default function BrowserSurface({ platform, desktop, launchInInbox, showT
   return <View style={styles.container}>
     <View style={styles.header}>
       <IconButton icon="x" label="Back to Quiet home" onPress={onClose} />
-      <View style={styles.heading}><Text style={styles.title}>{platform.name}</Text>
+      <View style={styles.heading}><Text style={styles.title}>{platform.name} website</Text>
         <Text style={styles.origin} numberOfLines={1}>{(() => { try { return new URL(navigation.url).hostname; } catch { return 'Secure browsing'; } })()}</Text>
       </View>
       <IconButton icon="shield" label="Filter status and website help" onPress={() => setShowInfo(true)} />
     </View>
     <View style={styles.progressTrack}>{loading && <View style={[styles.progress, { width: `${Math.max(6, progress * 100)}%` }]} />}</View>
-    {showTips && platform.limitation && <View style={styles.tip}><Icon name="info" size={15} color={colors.amber} />
-      <Text style={styles.tipText}>{platform.id === 'snapchat' ? 'Snapchat may not support iPhone browsers. Tap the shield for help.' : 'TikTok’s web inbox may be unavailable for your account. Tap the shield for help.'}</Text>
-    </View>}
     <View style={styles.webContainer}>
       <WebView<{}> ref={web} key={`${platform.id}-${desktop ? 'desktop' : 'mobile'}`} style={styles.web}
         source={source} userAgent={desktop ? DESKTOP_USER_AGENT : undefined}
@@ -151,10 +148,8 @@ export default function BrowserSurface({ platform, desktop, launchInInbox, showT
     <Modal visible={showInfo} transparent animationType={reducedMotion ? 'none' : 'slide'} onRequestClose={() => setShowInfo(false)}>
       <View style={styles.scrim}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent}>
         <View style={styles.sheetHeader}><Icon name="shield" size={26} color={colors.green} /><IconButton icon="x" label="Close website help" onPress={() => setShowInfo(false)} /></View>
-        <Text style={styles.sheetTitle}>A quieter {platform.name}.</Text><Text style={styles.sheetCopy}>{platform.description}</Text>
-        <Text style={styles.sheetCopy}>This is the website inside Quiet. Your installed apps stay unchanged. Short-video links, including links in messages, are blocked too.</Text>
-        {platform.limitation && <Text style={[styles.sheetCopy, { color: colors.amber }]}>{platform.limitation}</Text>}
-        <Text style={styles.sheetCopy}>Some sign-in providers reject embedded browsers. Try the platform’s own email or username sign-in. Sign out using the website’s account menu.</Text>
+        <Text style={styles.sheetTitle}>YouTube website</Text><Text style={styles.sheetCopy}>{platform.description}</Text>
+        <Text style={styles.sheetCopy}>Google sign-in may limit access from embedded browsers. Sign out using YouTube’s account menu.</Text>
         <PrimaryButton title={desktop ? 'Switch to mobile website' : 'Try desktop website'} icon="monitor" onPress={() => { setShowInfo(false); setReady(false); onToggleDesktop(); }} />
         <Text style={styles.smallPrint}>No website data is sent to a Quiet server. Website changes can affect filters.</Text>
       </ScrollView></View>
@@ -168,9 +163,7 @@ const styles = StyleSheet.create({
   heading: { flex: 1, alignItems: 'center' }, title: { color: colors.ink, fontWeight: '600', fontSize: 15 },
   origin: { fontSize: 11, color: colors.muted, marginTop: 3, maxWidth: 230 },
   progressTrack: { height: 2, backgroundColor: colors.line }, progress: { height: 2, backgroundColor: colors.green },
-  tip: { backgroundColor: colors.lightAmber, flexDirection: 'row', padding: 11, gap: 8, alignItems: 'center' },
-  tipText: { fontSize: 11, lineHeight: 16, color: colors.amber, flex: 1 },
-  webContainer: { flex: 1, backgroundColor: colors.white }, web: { flex: 1, backgroundColor: colors.white },
+  webContainer: { flex: 1, backgroundColor: colors.surface }, web: { flex: 1, backgroundColor: colors.surface },
   loading: { position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', gap: 14, backgroundColor: colors.canvas },
   loadingText: { color: colors.muted, fontSize: 13 },
   error: { position: 'absolute', inset: 0, backgroundColor: colors.canvas, justifyContent: 'center', padding: 30, gap: 20 },

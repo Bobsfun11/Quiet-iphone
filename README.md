@@ -1,29 +1,24 @@
 # Quiet for iPhone
 
-A standalone iPhone app for using social websites with short-video navigation and feeds hidden. Built with React Native, Expo SDK 58 and `react-native-webview` (WKWebView on iOS). It has no application backend, ads, subscription, Quiet account, analytics or remote filter service.
+A standalone iPhone app that filters Shorts from the YouTube website. Quiet uses React Native, Expo SDK 58 and WKWebView on iOS. It has no backend, ads, subscription, Quiet account, analytics or remote filter service.
 
-**Windows handoff for this project:** [resume the free build](docs/RESUME-WINDOWS.md). The selected repository is `Bobsfun11/Quite-iphone`; the connected integration currently returns HTTP 403 for uploads. This is a GitHub account-access blocker before signing, not a completed native build.
+The public repository is [Bobsfun11/Quiet-iphone](https://github.com/Bobsfun11/Quiet-iphone). The previous 1.0.0 source compiled in a [hosted macOS run](https://github.com/Bobsfun11/Quiet-iphone/actions/runs/43264445242). Use the artifact from a successful run that matches the source revision you want to install. [Windows build handoff](docs/RESUME-WINDOWS.md)
 
-**Implementation is complete in source. Device installation, Apple code signing, native compilation and signed-in platform verification still require the steps below. The browser preview contains labelled sample content; it is not evidence that every platform works on an iPhone.**
+## What Quiet does
 
-## What is implemented
+- Hides YouTube Shorts navigation, shelves and tiles and blocks direct Shorts URLs. Search, subscriptions and long videos remain available.
+- Filters at document start and handles dynamic page updates, with a separate native policy for top-level navigation.
+- Keeps YouTube website sessions on the device and offers a subscriptions start page, desktop website mode and browser controls. It asks before opening external HTTPS links outside Quiet.
+- Follows the iPhone’s light or dark appearance for Quiet’s interface. YouTube renders its own website. Quiet supports Reduce Motion and uses SF Symbols and selective haptics on iOS. [Design notes](docs/DESIGN-NOTES.md)
+- Accepts a YouTube launch link from an optional iPhone Shortcuts automation. [Automatic-opening setup](docs/AUTO-OPEN.md)
 
-- Instagram: hide Reels navigation; block `/reel` and `/reels` routes. Keep regular feed, profiles, stories, Explore and the web inbox where Instagram permits them.
-- YouTube: hide Shorts navigation, shelves and tiles; block Shorts routes; keep regular videos, search and subscriptions.
-- TikTok: block For You, Following, Explore, Live and video routes; open the web inbox with desktop view enabled by default. Web messaging and sign-in may require the native app and are not guaranteed.
-- Snapchat: hide Spotlight navigation and block Spotlight routes. Attempt Snapchat for Web in desktop view. **Snapchat may refuse iPhones; desktop view does not guarantee chat, camera, calls or sign-in support.**
-- Two filtering layers: document-start CSS/JavaScript (including dynamic DOM updates and History API navigation), plus a native main-frame navigation policy.
-- Strict short-video filtering: individual Reel/Short/video links, including links sent in messages, are blocked too. Long videos stay available.
-- Persistent WKWebView website sessions; per-platform desktop view; an inbox-first preference; onboarding; browser back/forward/reload; loading, error and interrupted-process states; external-link confirmation; compatibility help; preference reset.
-- Platform-specific app links and an in-app guide for free iPhone Shortcuts automations that forward an original-app launch into Quiet. See [automatic-opening setup](docs/AUTO-OPEN.md); the automation must be created on your iPhone.
-- Refined grouped layouts, iPhone SF Symbols, short Reanimated entrances, tactile press feedback, selective haptics and reduced-motion support. See [design notes and skill sources](docs/DESIGN-NOTES.md).
-- Original app links are rejected. External HTTPS sites can open in the system browser only after confirmation; protection does not apply there.
+The embedded Instagram, TikTok and Snapchat integrations were removed. If you set up a Shortcuts automation for one of them, turn it off in Shortcuts on your iPhone.
 
 ## Install on your iPhone
 
-**Windows, no paid Apple membership:** use the [Windows personal-signing instructions](docs/WINDOWS-INSTALL.md). The included manual GitHub workflow builds an unsigned device IPA on a hosted Mac. AltStore Classic on Windows signs it with your regular Apple account. Free signatures need refreshing every seven days. No paid Apple membership is required for that route; the hosted build still needs a repository and an available free runner allowance or public-source approval.
+The manual GitHub workflow builds an unsigned device IPA on a standard hosted Mac in the public repository. AltStore Classic on Windows signs it with your regular Apple account. Free signatures need refreshing every seven days. [Windows personal-signing instructions](docs/WINDOWS-INSTALL.md)
 
-There is no installable `.ipa` in this archive: Apple must sign device builds. Do not enter an Apple password, signing key or social password in chat.
+Download the IPA from the GitHub workflow artifact and sign it before installation. Enter your Apple password directly in the local signing tool.
 
 ### Option A — Mac and Xcode (personal development install)
 
@@ -42,7 +37,7 @@ The included `Install-on-iPhone.command` prepares dependencies and opens Xcode f
 3. Connect your iPhone, trust the Mac, and enable Developer Mode in iPhone Settings → Privacy & Security if prompted.
 4. In Xcode, select the **Quiet** target → Signing & Capabilities. Select your personal Apple development team, enable automatic signing and change `com.quietsocial.personal` to your own unique identifier if necessary.
 5. Select your iPhone as the run destination. Choose **Product → Scheme → Edit Scheme → Run → Build Configuration → Release**, then press Run. Release embeds the JavaScript bundle, so the installed app does not need a development server.
-6. Trust the developer in iPhone Settings → General → VPN & Device Management if prompted. Open Quiet and sign in directly on each social website.
+6. Trust the developer in iPhone Settings → General → VPN & Device Management if prompted. Open Quiet and sign in directly on the YouTube website if it allows your account to sign in.
 
 A free personal Apple team can usually install a development build, subject to Apple's current device/capability limits. Such installs expire and typically need rebuilding after seven days. A paid developer membership supports longer distribution options.
 
@@ -87,21 +82,23 @@ npm run test:browser
 
 The Playwright config uses `/usr/bin/chromium` by default on Linux; set `CHROMIUM_PATH` to a different installed Chromium/Chrome binary if needed. For WebKit's Linux system libraries, follow Playwright's install-dependencies instructions. `npm run preview` runs the **sample-content browser preview**, not live social websites. Do not use that preview for social sign-in.
 
-Browser tests run the exact injected filter source against local invented fixtures in Chromium and WebKit. They verify short-feed removal, regular-content and login preservation, dynamic updates, route interception, media pausing, origin checks, reinjection, onboarding and saved preferences. They do not verify signed-in Instagram/TikTok/YouTube/Snapchat, WKWebView delegates or real-device capabilities. See [device acceptance checks](docs/DEVICE-CHECKLIST.md).
+Browser tests run the exact injected filter source against local fixtures in Chromium and WebKit. They exercise YouTube Shorts filtering, regular content, dynamic updates, navigation and the browser preview. Signed-in YouTube, WKWebView navigation and the iPhone’s appearance and motion need separate [device checks](docs/DEVICE-CHECKLIST.md).
 
 ## Privacy
 
-Quiet's injected code never reads login fields, messages or cookies. Website sessions are maintained by the default WKWebView data store, separate from Safari. Native preferences contain only onboarding and view options. The script-to-native bridge accepts only small, fixed status messages. No user URLs or page text are saved to preferences. Social websites naturally receive your requests, cookies and activity under their own policies.
+Quiet's injected code never reads login fields, messages or cookies. Website sessions are maintained by the default WKWebView data store, separate from Safari. Native preferences contain only onboarding and view options. The script-to-native bridge accepts only small, fixed status messages. No user URLs or page text are saved to preferences. YouTube receives your requests, cookies and activity under its own policies.
 
-Sign out using each website's account menu. Preference reset intentionally **does not** erase website cookies. To remove local app data, sign out and delete the app using **Delete App**, not Offload App; Apple/iCloud backups may retain previous data according to your device settings. Quiet has no background notifications or automatic sync with the native apps.
+Sign out using YouTube’s account menu. Resetting preferences keeps website cookies. To remove local app data, sign out and use **Delete App**. Apple and iCloud backups may retain previous data according to your device settings.
 
 ## Scope and maintenance
 
-This app neither changes nor locks installed social apps. To avoid returning to those feeds, remove their Home Screen shortcuts or separately configure Apple's Screen Time. Screen Time integration is not included; it needs additional Apple entitlements and is unnecessary to filter Quiet's own web views.
+Quiet’s filter applies to the YouTube website inside Quiet. The official YouTube, Instagram and TikTok apps still have their own feeds. A Shortcuts redirect takes effect after YouTube opens and can be disabled in Shortcuts.
 
-Some platforms block embedded sign-in, especially Google/Facebook single sign-on. Use direct platform email/username sign-in when offered. Quiet cannot transfer Safari cookies, override account restrictions, unlock missing web features, guarantee zero content flashes or guarantee that a platform redesign will match these selectors. Site experiments and non-English labels can require rule updates.
+For Instagram, Slowth is a free App Store option that can detect Reels in the official app while a screen broadcast you start is active. It processes frames on the device and temporarily shields the whole app when it detects Reels. Instagram’s inbox remains available when the shield is clear. [Slowth](https://github.com/skar404/slowth)
 
-Filter data lives in `src/model/platforms.ts`, URL decisions in `src/filter/policy.ts`, and the document-start filter in `src/filter/script.ts`. There are no broad text filters that hide unrelated conversations. The project is independent of the platforms and of SocialLite, with original code and artwork.
+Selective feed blocking with working native TikTok messaging remains unverified and unimplemented. Apple’s Screen Time shielding APIs require Family Controls, which Apple lists as unavailable to free Personal Teams. App distribution with the entitlement needs separate Apple approval. [iOS signing capabilities](https://developer.apple.com/help/account/reference/supported-capabilities-ios), [Family Controls entitlement](https://developer.apple.com/documentation/familycontrols/requesting-the-family-controls-entitlement)
+
+Google may restrict sign-in from embedded browsers. Website sessions are separate from Safari and the YouTube app. YouTube layout changes can require updates to Quiet’s filter. Filter data lives in `src/model/platforms.ts`, URL decisions in `src/filter/policy.ts`, and the document-start filter in `src/filter/script.ts`.
 
 ## Project layout
 

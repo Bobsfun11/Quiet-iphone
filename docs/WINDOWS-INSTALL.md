@@ -2,7 +2,7 @@
 
 You do **not** need a paid Apple Developer membership, Expo membership or your own Mac for this route. A hosted Mac first compiles an **unsigned iPhone device IPA**. AltStore Classic and AltServer on Windows then sign it for your own iPhone using your regular Apple account.
 
-**Current status:** the workflow and packaging checks are implemented. An actual device IPA still needs a successful hosted Mac run. No device IPA has been compiled or installed yet. A source ZIP, web preview or iOS Simulator build is not the IPA you need.
+The previous 1.0.0 source produced a verified device IPA on the hosted Mac. For the revised YouTube-only app, use a successful workflow run of the updated source. [Previous build](https://github.com/Bobsfun11/Quiet-iphone/actions/runs/43264445242)
 
 ## 1. Produce the device IPA
 
@@ -10,19 +10,12 @@ The project includes `.github/workflows/build-unsigned-ios.yml` and `scripts/bui
 
 The workflow installs locked dependencies, generates the iOS project, builds `Release-iphoneos` on a standard `macos-26` runner with code signing disabled, and embeds the JavaScript bundle. It then validates that the main executable is arm64 for **iPhoneOS**, not an iOS Simulator, and packages `Payload/Quiet.app` as `Quiet-unsigned.ipa`, preserving executable permissions.
 
-### GitHub repository choice
-
-- **Public source:** standard GitHub-hosted runners are free for public repositories. Making Quiet's new source public needs your approval first. No social account, Apple credential or signing file belongs in that repository.
-- **Private source:** standard builds consume the account's included Actions compute allowance and may be charged once it is exhausted. Use this only after confirming sufficient included allowance or enforcing a zero-spend budget in GitHub's settings. The current connection cannot read your billing allowance; it has not been changed.
-
-No repository is made public automatically by the app or the workflow. No paid Apple program is involved in either repository option. GitHub's standard runner allowance/billing rules still apply.
-
-Once the source is in your chosen repository:
+The standard GitHub-hosted runner is free for this public repository. Keep Apple credentials and signing files out of the source. [Bobsfun11/Quiet-iphone](https://github.com/Bobsfun11/Quiet-iphone)
 
 1. Open **Actions → Build iPhone IPA for Windows signing → Run workflow**.
-2. Wait for the run to finish. If it fails, use its `Quiet-native-build-log` artifact to diagnose the first error; do not mistake a failed run for an app delivery.
-3. On the successful run, under **Artifacts**, download `Quiet-unsigned-iPhone`. Artifacts are retained for three days, so save a copy locally.
-4. Extract the downloaded artifact ZIP. The file you need is **`Quiet-unsigned.ipa`**. Keep its `.sha256` checksum file with it.
+2. Wait for the run to finish. If it fails, check the run log or its `Quiet-native-build-log` artifact.
+3. While signed in to GitHub, download `Quiet-unsigned-iPhone` from **Artifacts** on the successful run. GitHub retains it for three days. Save a local copy.
+4. Extract the artifact ZIP. Keep **`Quiet-unsigned.ipa`** and its `.sha256` checksum file together.
 
 You do not need to run a developer server, compile code on Windows or rebuild weekly. The same IPA can be re-signed. Compile again only when the source changes.
 
@@ -42,10 +35,10 @@ Use the official [AltStore Classic Windows instructions](https://faq.altstore.io
 1. Copy **`Quiet-unsigned.ipa`** to the iPhone's Files app, for example through iCloud Drive. Use the IPA inside the downloaded artifact, not its outer ZIP and not `Quiet-iPhone-Project.zip`.
 2. Keep AltServer running on the Windows PC with the iPhone connected by USB or reachable over configured Wi-Fi sync.
 3. Open **AltStore Classic → My Apps → +**, select `Quiet-unsigned.ipa`, and let AltStore sign and install it. Complete any account/2FA prompt directly in AltStore or AltServer.
-4. Open Quiet from the iPhone Home Screen. It should work without a Metro/development server. Sign in directly on the social websites inside the app.
-5. Complete [the real-device checks](DEVICE-CHECKLIST.md), especially platform sign-in and TikTok/Snapchat compatibility. The public browser-fixture tests do not prove those features work with your accounts on iPhone.
+4. Open Quiet from the iPhone Home Screen. A Release build starts without a Metro server. Sign in directly on the YouTube website if it allows your account to sign in.
+5. Check the iPhone’s appearance, scrolling and YouTube Shorts filter on the device. [Real-device checklist](DEVICE-CHECKLIST.md)
 
-To switch from an original app into its Quiet view when you open it, set up the free [Shortcuts automation](AUTO-OPEN.md). Opening the original app does not redirect by default.
+You can set up an optional Shortcuts automation to switch to Quiet after the official YouTube app opens. Turn off any old Instagram, TikTok or Snapchat automations that open Quiet. [Shortcuts setup](AUTO-OPEN.md)
 
 ## 4. Keep it working without a paid membership
 
@@ -62,4 +55,4 @@ If Quiet expires, re-sign/reinstall the same IPA using the same account and iden
 - [AltStore troubleshooting](https://faq.altstore.io/altstore-classic/troubleshooting-guide)
 - [GitHub standard runner availability and billing](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job)
 
-Quiet still provides filtered social **websites inside its own app**. It does not change the tabs in the original apps. Snapchat/TikTok may reject or limit web access even after the app is signed and installed.
+The Shorts filter applies to YouTube’s website inside Quiet. The official YouTube app retains its own tabs and feed.

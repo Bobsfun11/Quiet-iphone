@@ -48,18 +48,18 @@ test('YouTube: intercepts client-side feed navigation and safely dismisses the g
   expect(new URL(page.url()).pathname).toBe('/watch');
 });
 
-test('Instagram: blocks unstyled direct Reel links without preventing messages', async ({ page }) => {
-  await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: demoHTML('instagram') }));
-  await page.addInitScript({ content: buildFilterScript('instagram') });
-  await page.goto('https://www.instagram.com/direct/inbox/');
+test('YouTube: blocks unstyled direct Shorts links without preventing regular videos', async ({ page }) => {
+  await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: demoHTML('youtube') }));
+  await page.addInitScript({ content: buildFilterScript('youtube') });
+  await page.goto('https://m.youtube.com/feed/subscriptions');
   await page.evaluate(() => {
-    const link = document.createElement('a'); link.href = '/REEL/direct'; link.id = 'direct-reel'; link.textContent = 'A shared reel'; document.body.appendChild(link);
+    const link = document.createElement('a'); link.href = '/SHORTS/direct'; link.id = 'direct-short'; link.textContent = 'A shared video'; document.body.appendChild(link);
   });
   // The capture listener also protects links activated before a scan or by
   // website code, even when the link is already hidden by route semantics.
-  await page.locator('#direct-reel').evaluate(element => (element as HTMLAnchorElement).click());
+  await page.locator('#direct-short').evaluate(element => (element as HTMLAnchorElement).click());
   await expect(page.getByRole('dialog')).toBeVisible();
-  expect(new URL(page.url()).pathname).toBe('/direct/inbox/');
+  expect(new URL(page.url()).pathname).toBe('/feed/subscriptions');
   await page.getByRole('button', { name: 'Back to what matters' }).click();
   await expect(page.locator('#normal-link')).toBeVisible();
 });

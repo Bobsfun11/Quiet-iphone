@@ -58,7 +58,7 @@ function QuietApp() {
   }, [preferences]);
 
   return <View style={styles.outer}><SafeAreaView style={styles.app}>
-    <StatusBar style="dark" />
+    <StatusBar style="auto" />
     {storageError && <Text accessibilityRole="alert" style={styles.storageError}>Settings can’t be saved on this device right now.</Text>}
     {!preferences ? <View style={styles.center}><ActivityIndicator color={colors.green} /></View> :
       !preferences.onboarded ? <WelcomeScreen onContinue={() => setPreferences({ ...preferences, onboarded: true })} /> :
@@ -66,7 +66,7 @@ function QuietApp() {
       screen === 'settings' ? <SettingsScreen preferences={preferences} onChange={setPreferences} onBack={() => setScreen('home')}
         onReset={() => { setScreen('home'); setPreferences(freshPreferences()); }} /> :
       <BrowserSurface key={`${screen}-${launchNumber}`} platform={getPlatform(screen)} desktop={preferences.desktop[screen]}
-        launchInInbox={shortcutInbox || preferences.launchInInbox} showTips={preferences.showTips} onClose={() => setScreen('home')}
+        launchInInbox={shortcutInbox || preferences.launchInInbox} onClose={() => setScreen('home')}
         onToggleDesktop={() => setPreferences({ ...preferences, desktop: { ...preferences.desktop, [screen]: !preferences.desktop[screen] } })} />}
   </SafeAreaView></View>;
 }

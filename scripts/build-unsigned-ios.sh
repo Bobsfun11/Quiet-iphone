@@ -54,8 +54,9 @@ xcodebuild \
 QUIET_DEVICE_APP="build/iphone/DerivedData/Build/Products/Release-iphoneos/Quiet.app"
 python3 scripts/package-unsigned-ipa.py "$QUIET_DEVICE_APP" build/iphone/Quiet-unsigned.ipa
 python3 scripts/verify-ipa.py build/iphone/Quiet-unsigned.ipa
+QUIET_VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$QUIET_DEVICE_APP/Info.plist")"
 {
-  echo 'Quiet 1.0.0 — unsigned iPhone device build'
+  echo "Quiet $QUIET_VERSION — unsigned iPhone device build"
   echo 'Sign on Windows using AltStore Classic and your own free Apple account.'
   echo 'This file cannot be installed directly before personal signing.'
   echo "Source commit: $(git rev-parse HEAD 2>/dev/null || echo 'local build')"
