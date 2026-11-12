@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Quiet",
+    "slug": "quiet-social",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "scheme": "quiet-social",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.quietsocial.personal",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Allow camera access only when you choose to capture a photo or video on a social website.",
+        "NSMicrophoneUsageDescription": "Allow microphone access only when you choose to record or call on a social website.",
+        "NSPhotoLibraryUsageDescription": "Choose a photo or video to share on a social website.",
+        "NSPhotoLibraryAddUsageDescription": "Save an image when you choose to download it from a social website."
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F6F5EF",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-font"
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

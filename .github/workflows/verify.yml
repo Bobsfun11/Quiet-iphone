@@ -1,0 +1,47 @@
+name: Verify Quiet
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compile_ios:
+        description: Compile an unsigned iOS Simulator app on macOS
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      - run: npx playwright install --with-deps webkit chromium
+      - run: npm run export:web && npm run export:ios
+      - run: CHROMIUM_PATH="$(node -e 'console.log(require("playwright").chromium.executablePath())')" npm run test:browser
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: browser-test-results
+          path: test-results/
+  ios-simulator:
+    if: github.event_name == 'workflow_dispatch' && inputs.compile_ios
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: xcodebuild -version
+      - run: npm ci
+      - run: npx expo prebuild --platform ios && npx pod-install ios
+      - run: xcodebuild -workspace ios/Quiet.xcworkspace -scheme Quiet -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Quiet-iOS-Simulator
+          path: build/Build/Products/Release-iphonesimulator/Quiet.app

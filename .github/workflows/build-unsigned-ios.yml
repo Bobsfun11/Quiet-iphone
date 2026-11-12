@@ -1,0 +1,52 @@
+name: Build iPhone IPA for Windows signing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unsigned-iphone-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      COCOAPODS_DISABLE_STATS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check application logic and IPA packager
+        run: npm run typecheck && npm test && python3 -m unittest discover -s tests -p '*_test.py' -v
+      - name: Compile device app and package unsigned IPA
+        run: bash scripts/build-unsigned-ios.sh
+      - name: Save IPA for personal signing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Quiet-unsigned-iPhone
+          path: |
+            build/iphone/Quiet-unsigned.ipa
+            build/iphone/Quiet-unsigned.ipa.sha256
+            build/iphone/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+      - name: Save build errors when compilation fails
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Quiet-native-build-log
+          path: build/iphone/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 3
