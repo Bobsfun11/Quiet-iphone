@@ -26,7 +26,7 @@ const userBehaviorCode = 8;
 const canvasValue = 411533585;
 const chachaConstants = [1196819126, 600974999, 3863347763, 1451689750];
 const columnQuarters = [[0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15]] as const;
-const diagonalQuarters = [[0, 5, 10, 15], [1, 6, 11, 12], [2, 7, 8, 13], [3, 4, 9, 14]] as const;
+const diagonalQuarters = [[0, 5, 10, 15], [1, 6, 11, 12], [2, 7, 12, 13], [3, 4, 13, 14]] as const;
 const base64Alphabet = 'u09tbS3UvgDEe6r-ZVMXzLpsAohTn7mdINQlW412GqBjfYiyk8JORCF5/xKHwacP';
 const md5Constants = Array.from({ length: 64 }, (_, index) => Math.floor(Math.abs(Math.sin(index + 1)) * 2 ** 32));
 const md5Shifts = [[7, 12, 17, 22], [5, 9, 14, 20], [4, 11, 16, 23], [6, 10, 15, 21]];

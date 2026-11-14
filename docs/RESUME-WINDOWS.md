@@ -1,6 +1,6 @@
 # Build Quiet for iPhone from Windows
 
-The previous 1.0.0 source produced a verified arm64 iPhone IPA in [run 43264445242](https://github.com/Bobsfun11/Quiet-iphone/actions/runs/43264445242). That build contains the earlier integrations. Use a successful build of the revised source for the filtered YouTube website and system appearance support. [Public source repository](https://github.com/Bobsfun11/Quiet-iphone)
+Select the branch containing the native inbox build. The branch and source commit are recorded in the workflow run. [Public source repository](https://github.com/Bobsfun11/Quiet-iphone)
 
 1. Publish the source revision to the existing public repository.
 2. Open **Actions → Build iPhone IPA for Windows signing → Run workflow** and select the branch containing the revision. The workflow uses the standard `macos-26` hosted runner in the public repository.

@@ -25,3 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Other dependencies retain their own licenses in their packages.
+
+Quiet's iOS inbox links [MatrixRustSDK](https://github.com/matrix-org/matrix-rust-components-swift/tree/26.11.11), licensed under Apache 2.0. The Swift bindings and Rust SDK license texts are in `modules/quiet-matrix/ios/Resources/` and the app's QuietMatrixNotices bundle.
+
+The experimental TikTok signing module is adapted from ReLttk. See the [upstream MIT license](src/tiktok/UPSTREAM-LICENSE.txt).

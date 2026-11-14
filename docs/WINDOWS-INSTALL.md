@@ -2,7 +2,7 @@
 
 You do **not** need a paid Apple Developer membership, Expo membership or your own Mac for this route. A hosted Mac first compiles an **unsigned iPhone device IPA**. AltStore Classic and AltServer on Windows then sign it for your own iPhone using your regular Apple account.
 
-The previous 1.0.0 source produced a verified device IPA on the hosted Mac. For the revised YouTube-only app, use a successful workflow run of the updated source. [Previous build](https://github.com/Bobsfun11/Quiet-iphone/actions/runs/43264445242)
+Use an IPA from a successful run of the version you want to install. [Device build workflow](https://github.com/Bobsfun11/Quiet-iphone/actions/workflows/build-unsigned-ios.yml)
 
 ## 1. Produce the device IPA
 
@@ -35,10 +35,10 @@ Use the official [AltStore Classic Windows instructions](https://faq.altstore.io
 1. Copy **`Quiet-unsigned.ipa`** to the iPhone's Files app, for example through iCloud Drive. Use the IPA inside the downloaded artifact, not its outer ZIP and not `Quiet-iPhone-Project.zip`.
 2. Keep AltServer running on the Windows PC with the iPhone connected by USB or reachable over configured Wi-Fi sync.
 3. Open **AltStore Classic → My Apps → +**, select `Quiet-unsigned.ipa`, and let AltStore sign and install it. Complete any account/2FA prompt directly in AltStore or AltServer.
-4. Open Quiet from the iPhone Home Screen. A Release build starts without a Metro server. Sign in directly on the YouTube website if it allows your account to sign in.
-5. Check the iPhone’s appearance, scrolling and YouTube Shorts filter on the device. [Real-device checklist](DEVICE-CHECKLIST.md)
+4. Open Quiet from the iPhone Home Screen. A Release build starts without a Metro server. Open Instagram in Quiet and follow the Beeper setup instructions.
+5. Check appearance, keyboard and scrolling on the iPhone, then verify that an Instagram text arrives in both directions. [Real-device checklist](DEVICE-CHECKLIST.md)
 
-You can set up an optional Shortcuts automation to switch to Quiet after the official YouTube app opens. Turn off any old Instagram, TikTok or Snapchat automations that open Quiet. [Shortcuts setup](AUTO-OPEN.md)
+An optional Shortcuts automation can switch to Quiet after the official Instagram app opens. Turn off old Quiet automations for Snapchat or YouTube. [Shortcuts setup](AUTO-OPEN.md)
 
 ## 4. Keep it working without a paid membership
 
@@ -46,7 +46,7 @@ Free-account installations expire after **seven days**. Open **AltStore → My A
 
 Apple also limits active sideloaded apps and App IDs with free accounts. AltStore itself occupies an app slot; Quiet has no app extensions. No JIT setup is needed for this app: Hermes executes its embedded bytecode normally. There is no jailbreak step.
 
-If Quiet expires, re-sign/reinstall the same IPA using the same account and identifier. Avoid deleting the app if you want to preserve its local website sessions. AltStore describes refreshing and recovery in its official documentation.
+If Quiet expires, re-sign/reinstall the same IPA using the same account and identifier. Avoid deleting the app if you want to preserve its local Beeper session. AltStore describes refreshing and recovery in its official documentation.
 
 ## References
 
@@ -54,5 +54,3 @@ If Quiet expires, re-sign/reinstall the same IPA using the same account and iden
 - [AltStore refresh and free-account limits](https://faq.altstore.io/altstore-classic/your-altstore)
 - [AltStore troubleshooting](https://faq.altstore.io/altstore-classic/troubleshooting-guide)
 - [GitHub standard runner availability and billing](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job)
-
-The Shorts filter applies to YouTube’s website inside Quiet. The official YouTube app retains its own tabs and feed.
