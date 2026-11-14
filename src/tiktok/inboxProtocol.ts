@@ -23,6 +23,7 @@ export type TikTokConversation = {
   name: string;
   isGroup: boolean;
   unread: boolean;
+  updatedAt?: string;
 };
 
 export type TikTokHistoryMessage = { id: string; senderId: string; sentAt?: string; text?: string };
@@ -137,20 +138,37 @@ function response(input: Uint8Array, command: 203 | 301) {
   const fields = decode(input);
   const status = number(fields, 3);
   if (status !== undefined && status !== 0n) throw new Error(`TikTok messaging returned status ${status}.`);
-  if (number(fields, 1) !== BigInt(command)) throw new Error('TikTok response does not match the requested inbox operation.');
+  const kind = number(fields, 1);
+  if (kind !== BigInt(command) && !(command === 301 && (kind === 0n || kind === undefined))) {
+    throw new Error('TikTok response does not match the requested inbox operation.');
+  }
   const payload = children(fields, 6).flatMap(body => children(body, command))[0];
   if (!payload) throw new Error('TikTok returned no inbox payload.');
   return payload;
 }
 
 export function decodeConversations(input: Uint8Array): TikTokConversation[] {
-  return children(response(input, 203), 2).flatMap(conversation => {
+  const payload = response(input, 203);
+  const conversations = new Map<string, TikTokConversation>();
+  for (const conversation of children(payload, 2)) {
     const id = text(conversation, 1);
-    if (!id) return [];
+    if (!id) continue;
     const details = children(conversation, 50)[0];
-    return [{ id, shortId: number(conversation, 2), name: (details && text(details, 5)) || 'TikTok conversation',
-      isGroup: number(conversation, 3) === 2n, unread: (number(conversation, 11) ?? 0n) > 0n }];
-  });
+    const updatedAt = isoDate(number(conversation, 13));
+    conversations.set(id, { id, shortId: number(conversation, 2), name: (details && text(details, 5)) || 'TikTok conversation',
+      isGroup: number(conversation, 3) === 2n, unread: (number(conversation, 11) ?? 0n) > 0n,
+      ...(updatedAt ? { updatedAt } : {}) });
+  }
+  for (const entry of children(payload, 1)) {
+    const id = text(entry, 1);
+    if (!id || !number(entry, 3)) continue;
+    const conversation = conversations.get(id) ?? { id, name: 'TikTok conversation', unread: false, isGroup: number(entry, 2) === 2n };
+    conversation.shortId ??= number(entry, 5);
+    const micros = number(entry, 4);
+    conversation.updatedAt ??= isoDate(micros === undefined ? undefined : micros / 1000n);
+    conversations.set(id, conversation);
+  }
+  return [...conversations.values()];
 }
 
 export function decodeHistory(input: Uint8Array, conversationId: string): TikTokHistoryMessage[] {
@@ -169,8 +187,12 @@ export function decodeHistory(input: Uint8Array, conversationId: string): TikTok
         body = content;
       }
     }
-    const millis = number(message, 10);
-    const date = millis && millis <= 8_640_000_000_000_000n ? new Date(Number(millis)) : undefined;
-    return [{ id: id.toString(), senderId: senderId.toString(), ...(date ? { sentAt: date.toISOString() } : {}), text: body }];
+    const micros = number(message, 4);
+    const sentAt = isoDate(number(message, 10)) ?? (micros && micros > 1_000_000_000_000_000n ? isoDate(micros / 1000n) : undefined);
+    return [{ id: id.toString(), senderId: senderId.toString(), ...(sentAt ? { sentAt } : {}), text: body }];
   });
+}
+
+function isoDate(millis: bigint | undefined) {
+  return millis && millis >= 1_000_000_000_000n && millis <= 8_640_000_000_000_000n ? new Date(Number(millis)).toISOString() : undefined;
 }

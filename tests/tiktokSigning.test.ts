@@ -36,7 +36,7 @@ test('the experimental TikTok handshake keeps the QR token and migration ticket 
     assert.ok(url.searchParams.get('X-Gnarly'));
     if (requests++ === 0) {
       assert.equal(url.pathname, '/passport/web/get_qrcode/');
-      return { data: { token: 'example', qrcode_index_url: qr, ttwid_migration_ticket: 'fixture-ticket' } };
+      return { data: { token: 'example', qrcode_index_url: qr, ttwid_migration_ticket: 'fixture-ticket', qrcode: 'iVBORw0KGgo=' } };
     }
     assert.equal(url.pathname, '/passport/web/check_qrconnect/');
     assert.equal(url.searchParams.get('token'), 'example');
@@ -44,7 +44,9 @@ test('the experimental TikTok handshake keeps the QR token and migration ticket 
     return { data: { status: 'expired' } };
   });
   assert.equal((await challenge.start()).href, qr);
+  assert.equal(challenge.imageUri, 'data:image/png;base64,iVBORw0KGgo=');
   assert.equal(await challenge.poll(), 'expired');
+  assert.equal(challenge.imageUri, undefined);
   await assert.rejects(challenge.poll(), /No TikTok login challenge/);
 
   const unsafe = new TikTokQrChallenge(context, randomWords, async () => ({

@@ -19,7 +19,7 @@ type NativePassport = {
   tiktokRandomWords(): Promise<number[]>;
   tiktokPassportRequest(id: string, url: string, userAgent: string, ticket: string | null): Promise<string>;
   tiktokInboxRequest(id: string, payload: string, history: boolean): Promise<string>;
-  tiktokProfile(id: string): Promise<string>;
+  tiktokProfile(id: string): Promise<{ userId: string; deviceId?: string }>;
 };
 
 export const nativeTikTokPassport = Platform.OS === 'ios'
@@ -39,10 +39,10 @@ export async function openTikTokAttempt() {
 }
 
 export async function openTikTokInbox({ attempt, native }: Awaited<ReturnType<typeof openTikTokAttempt>>): Promise<InboxClient> {
-  const userID = await native.tiktokProfile(attempt.id);
-  if (!userID) throw new Error('TikTok did not confirm the signed-in profile.');
+  const { userId, deviceId } = await native.tiktokProfile(attempt.id);
   const context = {
     ...attempt,
+    deviceId: deviceId ?? attempt.deviceId,
     locale: attempt.language,
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
     msToken: '',
@@ -56,7 +56,7 @@ export async function openTikTokInbox({ attempt, native }: Awaited<ReturnType<ty
   async function loadChats() {
     const rooms = decodeConversations(await read(conversationRequest(context)));
     conversations = new Map(rooms.map(room => [room.id, room]));
-    return rooms.map(room => ({ id: room.id, title: room.name, updatedAt: '', unread: room.unread, preview: '' }));
+    return rooms.map(room => ({ id: room.id, title: room.name, updatedAt: room.updatedAt ?? '', unread: room.unread, preview: '' }));
   }
   const firstChats = await loadChats();
   let readyChats: typeof firstChats | undefined = firstChats;
@@ -70,7 +70,7 @@ export async function openTikTokInbox({ attempt, native }: Awaited<ReturnType<ty
       const room = conversations.get(id);
       if (!room) throw new Error('This TikTok conversation is unavailable.');
       const messages = decodeHistory(await read(historyRequest(context, room), true), id);
-      return messages.map(message => ({ id: message.id, text: message.text ?? 'Attachment', sentAt: message.sentAt ?? '', outgoing: message.senderId === userID }));
+      return messages.map(message => ({ id: message.id, text: message.text ?? 'Attachment', sentAt: message.sentAt ?? '', outgoing: message.senderId === userId }));
     },
   };
 }

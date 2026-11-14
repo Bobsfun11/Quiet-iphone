@@ -188,6 +188,7 @@ actor InstagramInbox {
         let sqlite = SqliteStoreBuilder(dataPath: data.path, cachePath: cache.path).key(key: key)
         return try await ClientBuilder().homeserverUrl(url: Self.homeserver).disableWellKnownLookup(disableWellKnownLookup: true)
             .sqliteStore(config: sqlite).slidingSyncVersionBuilder(versionBuilder: .native)
+            .backupDownloadStrategy(backupDownloadStrategy: .afterDecryptionFailure)
             .autoEnableBackups(autoEnableBackups: false).autoEnableCrossSigning(autoEnableCrossSigning: false)
             .requestConfig(config: .init(retryLimit: 1, timeout: 30_000, maxConcurrentRequests: 6, maxRetryTime: nil)).build()
     }
@@ -210,7 +211,15 @@ actor InstagramInbox {
                     failures = 0
                 } catch {
                     guard !Task.isCancelled else { return }
-                    await self?.didFailSync(client)
+                    let code: String
+                    if let clientError = error as? ClientError,
+                       case let .MatrixApi(_, matrixCode, _, _) = clientError,
+                       matrixCode.range(of: "^M_[A-Z_]{1,40}$", options: .regularExpression) != nil {
+                        code = matrixCode
+                    } else {
+                        code = ""
+                    }
+                    await self?.didFailSync(client, code: code)
                     failures = min(failures + 1, 5)
                     try? await Task.sleep(for: .seconds(failures * 2))
                 }
@@ -228,10 +237,10 @@ actor InstagramInbox {
         needsRoomScan = needsRoomScan || changedRooms
     }
 
-    private func didFailSync(_ client: Client) {
+    private func didFailSync(_ client: Client, code: String) {
         guard self.client === client, !syncFailed else { return }
         syncFailed = true
-        Self.logger.error("Beeper sync request failed")
+        Self.logger.error("Beeper sync request failed \(code, privacy: .public)")
     }
 
     private func resetThread() {

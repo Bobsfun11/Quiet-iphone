@@ -51,7 +51,7 @@ public final class QuietMatrixModule: Module {
         AsyncFunction("tiktokInboxRequest") { (id: String, payload: String, history: Bool) async throws -> String in
             try await self.tiktok.inbox(id: id, payload: payload, history: history)
         }
-        AsyncFunction("tiktokProfile") { (id: String) async throws -> String in
+        AsyncFunction("tiktokProfile") { (id: String) async throws -> TikTokProfileRecord in
             try await self.tiktok.profile(id: id)
         }
     }
@@ -64,6 +64,11 @@ struct TikTokAttemptRecord: Record {
     @Field var region: String = ""
     @Field var language: String = ""
     @Field var timeZone: String = ""
+}
+
+struct TikTokProfileRecord: Record {
+    @Field var userId: String = ""
+    @Field var deviceId: String?
 }
 
 struct AccountStatus: Record {

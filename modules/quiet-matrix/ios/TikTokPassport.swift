@@ -85,16 +85,27 @@ actor TikTokPassport {
         return json
     }
 
-    func profile(id: String) async throws -> String {
+    func profile(id: String) async throws -> TikTokProfileRecord {
         let attempt = try authenticatedAttempt(id)
         var request = URLRequest(url: Self.origin.appendingPathComponent("messages"))
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         let (data, response) = try await attempt.session.data(for: request)
-        guard self.attempt?.id == id, (response as? HTTPURLResponse)?.statusCode == 200,
+        guard self.attempt?.id == id, (response as? HTTPURLResponse)?.statusCode == 200, data.count < 4 * 1024 * 1024,
               let page = String(data: data, encoding: .utf8),
-              let match = page.range(of: #""odinId"\s*:\s*"\d+""#, options: .regularExpression),
-              let uid = page[match].split(separator: "\"").last else { return "" }
-        return String(uid)
+              let tag = page.range(of: #"<script\b[^>]*\bid="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>"#, options: .regularExpression),
+              let end = page.range(of: "</script>", range: tag.upperBound..<page.endIndex),
+              let json = try JSONSerialization.jsonObject(with: Data(page[tag.upperBound..<end.lowerBound].utf8)) as? [String: Any],
+              let scope = json["__DEFAULT_SCOPE__"] as? [String: Any],
+              let context = scope["webapp.app-context"] as? [String: Any], let user = context["user"] as? [String: Any],
+              let userId = user["uid"] as? String, userId.range(of: "^[0-9]{1,24}$", options: .regularExpression) != nil else {
+            throw PassportError.session
+        }
+        var record = TikTokProfileRecord()
+        record.userId = userId
+        if let wid = context["wid"] as? String, wid.range(of: "^[0-9]{1,24}$", options: .regularExpression) != nil {
+            record.deviceId = wid
+        }
+        return record
     }
 
     func inbox(id: String, payload: String, history: Bool) async throws -> String {
