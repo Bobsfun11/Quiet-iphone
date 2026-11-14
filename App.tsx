@@ -7,6 +7,7 @@ import { PrimaryButton } from './src/components/Primitives';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { InboxScreen } from './src/screens/InboxScreen';
 import { InstagramSetupScreen } from './src/screens/InstagramSetupScreen';
+import { TikTokScreen } from './src/screens/TikTokScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { freshPreferences, parsePreferences, type Preferences } from './src/model/preferences';
@@ -78,6 +79,7 @@ function QuietApp() {
       screen === 'settings' ? <SettingsScreen onBack={() => setScreen('home')}
         onInstagramSetup={instagramSession ? () => setScreen('instagram-setup') : undefined}
         onReset={() => { setScreen('home'); setPreferences(freshPreferences()); }} /> :
+      screen === 'tiktok' ? <TikTokScreen key={launchNumber} onClose={() => setScreen('home')} /> :
       screen === 'instagram-setup' && (account || accountCheckFailed) ? <InstagramSetupScreen session={account ?? { state: 'signedOut' }} onSession={next => {
         setAccount(next);
         setAccountCheckFailed(false);
@@ -87,8 +89,7 @@ function QuietApp() {
         ? <View style={styles.center}><ActivityIndicator color={colors.green} accessibilityLabel="Checking Instagram connection" /></View>
         : <InboxScreen key={`${screen}-${launchNumber}`} platform={screen}
           client={screen === 'instagram' && account?.state === 'ready' ? instagramClient : null}
-          connectionUnavailableReason={screen === 'tiktok'
-            ? 'Quiet does not have a working connection for personal TikTok messages yet.' : instagramReason}
+          connectionUnavailableReason={instagramReason}
           connectionActionLabel={screen === 'instagram' && instagramSession
             ? account?.state === 'verificationRequired' ? 'Verify Beeper session' : 'Connect Instagram' : undefined}
           onClose={() => setScreen('home')} onSetup={() => setScreen('instagram-setup')} />}

@@ -3,6 +3,7 @@ import Foundation
 
 public final class QuietMatrixModule: Module {
     private let inbox = InstagramInbox()
+    private let tiktok = TikTokPassport()
 
     public func definition() -> ModuleDefinition {
         Name("QuietMatrix")
@@ -19,13 +20,15 @@ public final class QuietMatrixModule: Module {
         AsyncFunction("signOut") { () async throws in
             try await self.inbox.signOut()
         }
-        AsyncFunction("listChats") { () async throws -> [InboxChatRecord] in
+        AsyncFunction("listChats") { () async throws -> InboxListResult in
+            var result = InboxListResult()
             do {
-                return try await self.inbox.listChats()
+                result.chats = try await self.inbox.listChats()
             } catch let error as InboxError {
-                let code = error == .loading ? "QUIET_INBOX_LOADING" : "QUIET_INBOX_SYNC"
-                throw Exception(name: "InstagramInbox", description: error.localizedDescription, code: code)
+                result.loading = error == .loading
+                if !result.loading { result.errorMessage = error.localizedDescription }
             }
+            return result
         }
         AsyncFunction("listMessages") { (roomId: String) async throws -> [InboxMessageRecord] in
             try await self.inbox.listMessages(roomId: roomId)
@@ -33,7 +36,34 @@ public final class QuietMatrixModule: Module {
         AsyncFunction("sendMessage") { (roomId: String, text: String) async throws -> InboxMessageRecord in
             try await self.inbox.sendMessage(roomId: roomId, text: text)
         }
+        AsyncFunction("openTikTokAttempt") { () async -> TikTokAttemptRecord in
+            await self.tiktok.open()
+        }
+        AsyncFunction("closeTikTokAttempt") { (id: String) async in
+            await self.tiktok.close(id: id)
+        }
+        AsyncFunction("tiktokRandomWords") { () async throws -> [Int] in
+            try await self.tiktok.randomWords()
+        }
+        AsyncFunction("tiktokPassportRequest") { (id: String, url: String, userAgent: String, ticket: String?) async throws -> String in
+            try await self.tiktok.request(id: id, url: url, userAgent: userAgent, migrationTicket: ticket)
+        }
+        AsyncFunction("tiktokInboxRequest") { (id: String, payload: String, history: Bool) async throws -> String in
+            try await self.tiktok.inbox(id: id, payload: payload, history: history)
+        }
+        AsyncFunction("tiktokProfile") { (id: String) async throws -> String in
+            try await self.tiktok.profile(id: id)
+        }
     }
+}
+
+struct TikTokAttemptRecord: Record {
+    @Field var id: String = ""
+    @Field var deviceId: String = ""
+    @Field var verificationId: String = ""
+    @Field var region: String = ""
+    @Field var language: String = ""
+    @Field var timeZone: String = ""
 }
 
 struct AccountStatus: Record {
@@ -54,6 +84,12 @@ struct InboxChatRecord: Record {
     @Field var preview: String = ""
     @Field var updatedAt: String = ""
     @Field var unread: Bool = false
+}
+
+struct InboxListResult: Record {
+    @Field var chats: [InboxChatRecord] = []
+    @Field var loading = false
+    @Field var errorMessage: String?
 }
 
 struct InboxMessageRecord: Record {

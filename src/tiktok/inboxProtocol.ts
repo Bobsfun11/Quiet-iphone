@@ -1,8 +1,7 @@
 // Experimental wire format adapted from the ReLttk inbox and history requests.
 // See UPSTREAM-LICENSE.txt. This module makes no network requests.
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder('utf-8', { fatal: true });
+import { decodeUtf8, encodeUtf8 } from './utf8';
 const maxFrameBytes = 4 * 1024 * 1024;
 
 type Field = bigint | Uint8Array;
@@ -26,7 +25,7 @@ export type TikTokConversation = {
   unread: boolean;
 };
 
-export type TikTokHistoryMessage = { id: string; senderId: string; text?: string };
+export type TikTokHistoryMessage = { id: string; senderId: string; sentAt?: string; text?: string };
 
 function varint(value: bigint): number[] {
   if (value < 0n || value > 0xffffffffffffffffn) throw new Error('TikTok field is outside the unsigned 64-bit range.');
@@ -48,7 +47,7 @@ function bytes(field: number, value: Iterable<number> & { length: number }) {
 }
 
 function string(field: number, value: string) {
-  return bytes(field, encoder.encode(value));
+  return bytes(field, encodeUtf8(value));
 }
 
 function request(command: 203 | 301, sequence: number, payload: number[], context: TikTokInboxContext) {
@@ -131,7 +130,7 @@ function number(fields: Fields, field: number): bigint | undefined {
 
 function text(fields: Fields, field: number): string | undefined {
   const value = fields.get(field)?.[0];
-  return value instanceof Uint8Array ? decoder.decode(value) : undefined;
+  return value instanceof Uint8Array ? decodeUtf8(value) : undefined;
 }
 
 function response(input: Uint8Array, command: 203 | 301) {
@@ -170,6 +169,8 @@ export function decodeHistory(input: Uint8Array, conversationId: string): TikTok
         body = content;
       }
     }
-    return [{ id: id.toString(), senderId: senderId.toString(), text: body }];
+    const millis = number(message, 10);
+    const date = millis && millis <= 8_640_000_000_000_000n ? new Date(Number(millis)) : undefined;
+    return [{ id: id.toString(), senderId: senderId.toString(), ...(date ? { sentAt: date.toISOString() } : {}), text: body }];
   });
 }

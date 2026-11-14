@@ -46,7 +46,7 @@ function ConnectedInbox({ platform, client, onClose }: { platform: InboxPlatform
   const [query, setQuery] = useState('');
   const [chat, setChat] = useState<InboxChat | null>(null);
   const loadChats = useCallback(() => client.listChats(platform), [client, platform]);
-  const { items, refreshing, failure, refresh } = useInboxData(loadChats, 5_000, chat === null);
+  const { items, refreshing, failure, refresh } = useInboxData(loadChats, platform === 'tiktok' ? 20_000 : 5_000, chat === null);
   const search = query.trim().toLocaleLowerCase();
   const chats = useMemo(() => (items ?? [])
     .filter(item => !search || item.title.toLocaleLowerCase().includes(search))
@@ -90,7 +90,7 @@ function ChatThread({ chat, platform, client, onBack }: {
   onBack: () => void;
 }) {
   const loadMessages = useCallback(() => client.listMessages(platform, chat.id), [client, platform, chat.id]);
-  const { items, refreshing, failure, refresh } = useInboxData(loadMessages, 5_000);
+  const { items, refreshing, failure, refresh } = useInboxData(loadMessages, platform === 'tiktok' ? 15_000 : 5_000);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sendFailed, setSendFailed] = useState(false);
@@ -136,7 +136,7 @@ function ChatThread({ chat, platform, client, onBack }: {
 
   async function send() {
     const body = draft.trim();
-    if (!body || sendingRef.current) return;
+    if (!body || sendingRef.current || !client.sendMessage) return;
     sendingRef.current = true;
     setSending(true);
     setSendFailed(false);
@@ -178,7 +178,7 @@ function ChatThread({ chat, platform, client, onBack }: {
         }}
         ListEmptyComponent={<InboxNotice icon="message-circle" title="No messages yet" description="Send a message to start the conversation." />} />}
       {sendFailed && <Text accessibilityRole="alert" style={styles.status}>Couldn’t confirm sending. Check the conversation before trying again.</Text>}
-      <View style={styles.composer}>
+      {client.sendMessage ? <View style={styles.composer}>
         <TextInput accessibilityLabel="Message" style={styles.composerField} placeholder="Message…"
           placeholderTextColor={colors.muted} value={draft} onChangeText={setDraft} multiline
           textAlignVertical="center" editable={items !== null} maxLength={2000} />
@@ -188,7 +188,7 @@ function ChatThread({ chat, platform, client, onBack }: {
           style={({ pressed }) => [styles.send, sendDisabled && styles.disabled, pressed && styles.pressed]}>
           {sending ? <ActivityIndicator color={colors.onAccent} /> : <Icon name="send" color={colors.onAccent} size={19} />}
         </Pressable>
-      </View>
+      </View> : <Text style={styles.status}>Sending is unavailable in this TikTok test.</Text>}
     </KeyboardAvoidingView>
   </Animated.View>;
 }

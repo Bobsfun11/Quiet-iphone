@@ -1,5 +1,7 @@
 // Experimental port of the TikTok v5.3.2 web signing format. See UPSTREAM-LICENSE.txt.
 
+import { encodeUtf8 } from './utf8';
+
 type SigningMaterial = {
   /** The low 32 bits of the Unix timestamp in microseconds. */
   timestampMicrosLow: number;
@@ -18,7 +20,6 @@ type SigningInput = {
   gnarly: SigningMaterial;
 };
 
-const encoder = new TextEncoder();
 const version = '5.3.2';
 const sdkVersion = '2.0.0.561';
 const environmentCode = 1;
@@ -37,7 +38,7 @@ function rotateLeft(value: number, shift: number): number {
 
 function md5Hex(text: string): string {
   // The legacy protocol requires MD5 as a field checksum.
-  const input = encoder.encode(text);
+  const input = encodeUtf8(text);
   const bytes = new Uint8Array(Math.ceil((input.length + 9) / 64) * 64);
   bytes.set(input);
   bytes[input.length] = 0x80;
@@ -177,7 +178,7 @@ function dynosaurText(value: string | number, checksum = false): number[] {
 
 function dynosaurHash(text: string): number[] {
   let hash = 2166136260;
-  for (const byte of encoder.encode(text)) hash = Math.imul(Math.imul(hash ^ byte, 16777619), 33);
+  for (const byte of encodeUtf8(text)) hash = Math.imul(Math.imul(hash ^ byte, 16777619), 33);
   return bigEndian(hash, 4);
 }
 
@@ -211,7 +212,7 @@ function signGnarly(query: string, body: string, input: SigningInput): string {
   ];
   const textOrNumber = (field: string | number) => typeof field === 'number'
     ? field
-    : encoder.encode(field).subarray(0, 4).reduce((value, byte) => (value << 8) | byte, 0);
+    : encodeUtf8(field).subarray(0, 4).reduce((value, byte) => (value << 8) | byte, 0);
   const fullChecksum = fields.reduce<number>((checksum, field) => checksum ^ textOrNumber(field), 0);
   fields.push(fullChecksum >>> 0);
   fields[0] = fields.reduce<number>((checksum, field) => typeof field === 'number' ? checksum ^ field : checksum, 0) >>> 0;
@@ -220,7 +221,7 @@ function signGnarly(query: string, body: string, input: SigningInput): string {
   const order = [0, 12, 15, 13, 4, 8, 11, 7, 5, 3, 10, 14, 6, 9, 1, 2];
   const records = order.flatMap((index) => {
     const field = fields[index];
-    const bytes = typeof field === 'number' ? encodeInteger(field) : Array.from(encoder.encode(field));
+    const bytes = typeof field === 'number' ? encodeInteger(field) : Array.from(encodeUtf8(field));
     return [index, ...encodeInteger(bytes.length), ...bytes];
   });
   return signPayload(0x4b, Uint8Array.from([fields.length, ...records]), keyWords);

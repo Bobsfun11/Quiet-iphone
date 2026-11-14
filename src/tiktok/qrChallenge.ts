@@ -15,6 +15,7 @@ type ClientContext = {
 type PassportData = {
   token?: string;
   qrcode_index_url?: string;
+  qrcode?: string;
   ttwid_migration_ticket?: string;
   status?: string;
   error_code?: number;
@@ -28,12 +29,15 @@ export class TikTokQrChallenge {
   private challenge: { token: string; migrationTicket?: string } | undefined;
   private requestCount = 0;
   private busy = false;
+  private image: string | undefined;
 
   constructor(
     private readonly context: ClientContext,
-    private readonly randomWords: () => Uint32Array,
+    private readonly randomWords: () => Uint32Array | Promise<Uint32Array>,
     private readonly transport: PassportTransport,
   ) {}
+
+  get imageUri() { return this.image; }
 
   async start(): Promise<URL> {
     if (this.busy || this.challenge) throw new Error('A TikTok login challenge is already open.');
@@ -46,6 +50,9 @@ export class TikTokQrChallenge {
       const qr = new URL(data.qrcode_index_url);
       if (qr.origin !== origin || qr.pathname !== '/passport/web/scan_index/' || qr.searchParams.get('token') !== data.token) {
         throw new Error('TikTok returned an invalid QR link.');
+      }
+      if (typeof data.qrcode === 'string' && data.qrcode.length < 16_384 && /^iVBOR[A-Za-z0-9+/]+=*$/.test(data.qrcode)) {
+        this.image = `data:image/png;base64,${data.qrcode}`;
       }
       this.challenge = { token: data.token, migrationTicket: migrationTicket(data) };
       return qr;
@@ -67,6 +74,7 @@ export class TikTokQrChallenge {
         case 'confirmed':
         case 'expired':
           this.challenge = undefined;
+          this.image = undefined;
           return data.status;
         default:
           if (data.error_code === 2135) return 'verificationRequired';
@@ -81,9 +89,10 @@ export class TikTokQrChallenge {
     const query = new URLSearchParams(loginParameters(this.context));
     if (challenge) query.set('token', challenge.token);
     const now = Date.now();
-    const material = () => ({ timestampMicrosLow: (now * 1000) >>> 0, keyWords: this.randomWords() });
+    const [dynosaurWords, gnarlyWords] = await Promise.all([this.randomWords(), this.randomWords()]);
+    const material = (keyWords: Uint32Array) => ({ timestampMicrosLow: (now * 1000) >>> 0, keyWords });
     const signed = signTikTokQrQuery({ query: query.toString(), userAgent, timestampSeconds: Math.floor(now / 1000),
-      requestCount: ++this.requestCount, dynosaur: material(), gnarly: material() });
+      requestCount: ++this.requestCount, dynosaur: material(dynosaurWords), gnarly: material(gnarlyWords) });
     const headers: Record<string, string> = { 'User-Agent': userAgent, Accept: 'application/json', Referer: referer };
     if (challenge?.migrationTicket) headers['x-tt-passport-ttwid-ticket'] = challenge.migrationTicket;
     const payload = await this.transport(`${origin}/passport/web/${route}/?${signed}`, headers);

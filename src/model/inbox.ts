@@ -20,5 +20,5 @@ export type InboxMessage = {
 export type InboxClient = {
   listChats(platform: InboxPlatformId): Promise<InboxChat[]>;
   listMessages(platform: InboxPlatformId, chatId: string): Promise<InboxMessage[]>;
-  sendMessage(platform: InboxPlatformId, chatId: string, text: string): Promise<InboxMessage>;
+  sendMessage?(platform: InboxPlatformId, chatId: string, text: string): Promise<InboxMessage>;
 };

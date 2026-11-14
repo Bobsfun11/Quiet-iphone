@@ -12,7 +12,7 @@ type QuietMatrix = {
   signIn(username: string, password: string): Promise<InstagramSession>;
   verify(recoveryKey: string): Promise<InstagramSession>;
   signOut(): Promise<void>;
-  listChats(): Promise<InboxChat[]>;
+  listChats(): Promise<{ chats: InboxChat[]; loading: boolean; errorMessage?: string }>;
   listMessages(chatId: string): Promise<InboxMessage[]>;
   sendMessage(chatId: string, text: string): Promise<InboxMessage>;
 };
@@ -28,7 +28,10 @@ function requireInstagram(platform: InboxPlatformId): QuietMatrix {
 
 export const instagramClient: InboxClient = {
   async listChats(platform) {
-    return requireInstagram(platform).listChats();
+    const result = await requireInstagram(platform).listChats();
+    if (result.loading) throw Object.assign(new Error('Syncing with Beeper.'), { code: 'QUIET_INBOX_LOADING' });
+    if (result.errorMessage) throw Object.assign(new Error(result.errorMessage), { code: 'QUIET_INBOX_SYNC' });
+    return result.chats;
   },
   async listMessages(platform, chatId) {
     return requireInstagram(platform).listMessages(chatId);

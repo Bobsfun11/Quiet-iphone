@@ -7,6 +7,6 @@ A Shortcuts automation can switch to Quiet when you open the official Instagram 
 3. Add a **URL** action with `quiet-social://open/instagram`, followed by **Open URLs**.
 4. Save the automation and open Instagram. Quiet should open to the inbox or account setup.
 
-The TikTok link is `quiet-social://open/tiktok`. It opens Quiet's TikTok screen, where messaging is currently unavailable. Leave the automation off if you need to use the TikTok app for messages.
+The TikTok link is `quiet-social://open/tiktok`. It opens Quiet's TikTok screen. Leave the automation off during QR setup so you can approve the connection in the official app.
 
 Turn off any Quiet automations for YouTube or Snapchat. Those links have been removed. Quiet needs a valid personal Apple signature for its links to work.

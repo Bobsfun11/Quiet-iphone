@@ -5,7 +5,7 @@ Quiet is an iPhone app for using social messages without a short-video feed. The
 ## Current build
 
 - **Instagram** connects through Beeper Cloud. Quiet can open existing conversations and read or send text once the device is verified. This integration still needs a signed-in iPhone test. Media, calls, message requests and push notifications are outside this build's scope.
-- **TikTok** still appears in Quiet. Its native inbox is unavailable while a personal messaging connection is being researched.
+- **TikTok** has an experimental iPhone sign-in flow for opening existing conversations. It uses a QR code approved in the official TikTok app. Reading with a real account still needs an iPhone test. Sending is unavailable.
 - Instagram and TikTok have no embedded browser or feed in Quiet. Snapchat and YouTube have been removed.
 
 Quiet runs independently once installed. With free Apple signing, AltServer is used for signing and periodic refresh. iOS restricts Quiet from editing the interfaces of the official Instagram and TikTok apps. Optional [Shortcuts automations](docs/AUTO-OPEN.md) can redirect an app launch to the corresponding Quiet screen.
@@ -40,6 +40,6 @@ Set `CHROMIUM_PATH` if Chromium is installed away from the location in the Playw
 - `App.tsx` handles app navigation, preferences, and links from Shortcuts.
 - `src/screens/` contains the inbox, conversations, account setup, and the app's main screens.
 - `modules/quiet-matrix/` connects the iOS app to Beeper using a pinned version of the Matrix Rust SDK.
-- `src/tiktok/` contains experimental pieces of the TikTok connection. The app never uses them to sign in or fetch messages.
+- `src/tiktok/` contains the experimental TikTok sign-in and inbox reader.
 
 Quiet is MIT-licensed. Dependencies retain their own licenses. [Third-party notices](THIRD-PARTY-NOTICES.md)
