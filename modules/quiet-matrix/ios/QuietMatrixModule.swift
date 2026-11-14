@@ -20,7 +20,12 @@ public final class QuietMatrixModule: Module {
             try await self.inbox.signOut()
         }
         AsyncFunction("listChats") { () async throws -> [InboxChatRecord] in
-            try await self.inbox.listChats()
+            do {
+                return try await self.inbox.listChats()
+            } catch let error as InboxError {
+                let code = error == .loading ? "QUIET_INBOX_LOADING" : "QUIET_INBOX_SYNC"
+                throw Exception(name: "InstagramInbox", description: error.localizedDescription, code: code)
+            }
         }
         AsyncFunction("listMessages") { (roomId: String) async throws -> [InboxMessageRecord] in
             try await self.inbox.listMessages(roomId: roomId)

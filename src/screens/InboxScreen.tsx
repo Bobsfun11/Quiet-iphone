@@ -46,7 +46,7 @@ function ConnectedInbox({ platform, client, onClose }: { platform: InboxPlatform
   const [query, setQuery] = useState('');
   const [chat, setChat] = useState<InboxChat | null>(null);
   const loadChats = useCallback(() => client.listChats(platform), [client, platform]);
-  const { items, refreshing, failed, refresh } = useInboxData(loadChats, 10_000, chat === null);
+  const { items, refreshing, failure, refresh } = useInboxData(loadChats, 5_000, chat === null);
   const search = query.trim().toLocaleLowerCase();
   const chats = useMemo(() => (items ?? [])
     .filter(item => !search || item.title.toLocaleLowerCase().includes(search))
@@ -66,15 +66,15 @@ function ConnectedInbox({ platform, client, onClose }: { platform: InboxPlatform
           autoCapitalize="none" autoCorrect={false} clearButtonMode="while-editing" returnKeyType="search" />
       </View>
     </View>
-    {failed && items && <Text accessibilityRole="alert" style={styles.status}>Couldn’t refresh messages. Pull down to try again.</Text>}
+    {failure && items && <Text accessibilityRole="alert" style={styles.status}>{failure}</Text>}
     <FlatList data={chats} keyExtractor={item => item.id}
       style={styles.list} contentContainerStyle={chats.length ? styles.chatList : styles.emptyList}
       keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false} onRefresh={refresh} refreshing={refreshing}
       renderItem={({ item }) => <ChatRow chat={item} onPress={() => setChat(item)} />}
       ListEmptyComponent={items === null
-        ? failed
-          ? <InboxNotice icon="cloud-off" title="Couldn’t load messages" description="Check your connection and try again."
+        ? failure
+          ? <InboxNotice icon="cloud-off" title="Couldn’t load messages" description={failure}
               action={{ label: 'Try again', onPress: refresh }} />
           : <Loading label="Loading conversations" />
         : <InboxNotice icon={search ? 'search' : 'message-circle'} title={search ? 'No matches' : 'No conversations yet'}
@@ -90,7 +90,7 @@ function ChatThread({ chat, platform, client, onBack }: {
   onBack: () => void;
 }) {
   const loadMessages = useCallback(() => client.listMessages(platform, chat.id), [client, platform, chat.id]);
-  const { items, refreshing, failed, refresh } = useInboxData(loadMessages, 5_000);
+  const { items, refreshing, failure, refresh } = useInboxData(loadMessages, 5_000);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sendFailed, setSendFailed] = useState(false);
@@ -161,9 +161,9 @@ function ChatThread({ chat, platform, client, onBack }: {
     <InboxHeader title={chat.title} chat={chat} onBack={onBack} backLabel="Back to messages"
       onRefresh={refresh} refreshing={refreshing} />
     <KeyboardAvoidingView style={styles.list} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {failed && items && <Text accessibilityRole="alert" style={styles.status}>Couldn’t refresh this conversation.</Text>}
-      {items === null && (failed
-        ? <InboxNotice icon="cloud-off" title="Couldn’t load this conversation" description="Check your connection and try again."
+      {failure && items && <Text accessibilityRole="alert" style={styles.status}>{failure}</Text>}
+      {items === null && (failure
+        ? <InboxNotice icon="cloud-off" title="Couldn’t load this conversation" description={failure}
             action={{ label: 'Try again', onPress: refresh }} />
         : <Loading label="Loading messages" />)}
       {items && <FlatList ref={list} data={messages} keyExtractor={item => item.id}
@@ -278,7 +278,7 @@ function useInboxData<T>(load: () => Promise<T[]>, interval: number, active = tr
   const [snapshot, setSnapshot] = useState<{
     load: () => Promise<T[]>;
     items: T[] | null;
-    failed: boolean;
+    failure?: string;
   } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const refreshRef = useRef<() => void>(() => {});
@@ -294,9 +294,13 @@ function useInboxData<T>(load: () => Promise<T[]>, interval: number, active = tr
       if (manual) setRefreshing(true);
       try {
         const items = await load();
-        if (mounted) setSnapshot({ load, items, failed: false });
-      } catch {
-        if (mounted) setSnapshot(previous => ({ load, items: previous?.load === load ? previous.items : null, failed: true }));
+        if (mounted) setSnapshot({ load, items });
+      } catch (error) {
+        if (mounted) setSnapshot(previous => ({
+          load,
+          items: previous?.load === load ? previous.items : null,
+          failure: inboxFailure(error),
+        }));
       } finally {
         running = false;
         if (mounted) setRefreshing(false);
@@ -320,7 +324,15 @@ function useInboxData<T>(load: () => Promise<T[]>, interval: number, active = tr
 
   const refresh = useCallback(() => refreshRef.current(), []);
   const current = snapshot?.load === load ? snapshot : null;
-  return { items: current?.items ?? null, failed: current?.failed ?? false, refreshing, refresh };
+  return { items: current?.items ?? null, failure: current?.failure, refreshing, refresh };
+}
+
+function inboxFailure(error: unknown): string | undefined {
+  if (error instanceof Error && 'code' in error) {
+    if (error.code === 'QUIET_INBOX_LOADING') return undefined;
+    if (error.code === 'QUIET_INBOX_SYNC') return error.message;
+  }
+  return 'Check your connection and try again.';
 }
 
 function timestamp(value: string) {

@@ -71,8 +71,8 @@ struct MatrixSessionStore {
     }
 }
 
-enum InboxError: LocalizedError {
-    case storage, busy, signIn, verify, room, network, invalidMessage
+enum InboxError: LocalizedError, Equatable {
+    case storage, busy, signIn, verify, room, sync, roomDirectory, loading, invalidMessage
 
     var errorDescription: String? {
         switch self {
@@ -81,7 +81,9 @@ enum InboxError: LocalizedError {
         case .signIn: return "Sign in to Beeper to continue."
         case .verify: return "Verify this device with your Beeper recovery code."
         case .room: return "This Instagram conversation is unavailable."
-        case .network: return "Quiet couldn’t reach Beeper."
+        case .sync: return "Quiet couldn’t sync with Beeper. Try again in a moment."
+        case .roomDirectory: return "Quiet couldn’t identify your Instagram conversations."
+        case .loading: return "Syncing Instagram conversations with Beeper."
         case .invalidMessage: return "Enter a message of up to 2000 characters."
         }
     }

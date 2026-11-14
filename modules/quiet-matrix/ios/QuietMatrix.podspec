@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'QuietMatrix'
-  s.version = '1.1.0'
+  s.version = '1.1.1'
   s.summary = 'Native Beeper account and Instagram inbox for Quiet'
   s.description = s.summary
   s.license = { :type => 'MIT' }

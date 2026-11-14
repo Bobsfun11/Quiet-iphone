@@ -1,15 +1,19 @@
 import Foundation
 import MatrixRustSDK
+import os
 
 actor InstagramInbox {
     private static let homeserver = "https://matrix.beeper.com"
     private let store = MatrixSessionStore()
     private let dateFormatter = ISO8601DateFormatter()
     private var client: Client?
-    private var sync: SyncService?
+    private static let logger = Logger(subsystem: "com.quietsocial.personal", category: "InstagramSync")
+    private var sync: Task<Void, Never>?
     private var changingAccount = false
     private var roomIds: Set<String> = []
-    private var roomsCheckedAt = Date.distantPast
+    private var needsRoomScan = true
+    private var hasSynced = false
+    private var syncFailed = false
     private var activeThread: ActiveThread?
 
     private struct ActiveThread {
@@ -28,7 +32,7 @@ actor InstagramInbox {
         defer { changingAccount = false }
         let restored = try await buildClient(directory: saved.storeDirectory, key: saved.storeKey)
         try await restored.restoreSession(session: saved.session(homeserver: Self.homeserver))
-        try await start(restored)
+        start(restored)
         return try accountStatus(restored)
     }
 
@@ -48,11 +52,11 @@ actor InstagramInbox {
                 try await next.login(username: username, password: password, initialDeviceName: "Quiet for iPhone", deviceId: nil)
             }
             do {
-                try await start(next)
+                start(next)
                 try store.save(.init(session: next.session(), storeDirectory: directory, storeKey: key))
                 return try accountStatus(next)
             } catch {
-                await sync?.stop()
+                sync?.cancel()
                 sync = nil
                 client = nil
                 try? await next.logout()
@@ -86,8 +90,10 @@ actor InstagramInbox {
         client = nil
         resetThread()
         roomIds.removeAll()
-        roomsCheckedAt = .distantPast
-        await sync?.stop()
+        needsRoomScan = true
+        hasSynced = false
+        syncFailed = false
+        sync?.cancel()
         sync = nil
         if let previous { try? await previous.logout() }
         if let saved { try? FileManager.default.removeItem(at: storeURL(saved.storeDirectory)) }
@@ -95,6 +101,7 @@ actor InstagramInbox {
 
     func listChats() async throws -> [InboxChatRecord] {
         let client = try readyClient()
+        guard hasSynced else { throw syncFailed ? InboxError.sync : InboxError.loading }
         try await refreshRoomIds(client)
         let visibleRooms = roomIds
         var results: [InboxChatRecord] = []
@@ -113,9 +120,6 @@ actor InstagramInbox {
             results.append(record)
         }
         guard self.client === client else { throw InboxError.signIn }
-        // Matrix's room list arrives asynchronously after sign-in; try again
-        // when the homeserver has joined portals but the SDK has not loaded them.
-        if !visibleRooms.isEmpty && results.isEmpty { throw InboxError.network }
         return results
     }
 
@@ -193,11 +197,41 @@ actor InstagramInbox {
             .appendingPathComponent("QuietInstagram", isDirectory: true).appendingPathComponent(directory.uuidString, isDirectory: true)
     }
 
-    private func start(_ client: Client) async throws {
-        let service = try await client.syncService().finish()
-        await service.start()
+    private func start(_ client: Client) {
         self.client = client
-        sync = service
+        sync = Task.detached { [weak self] in
+            // Beeper's classic sync includes cloud bridge rooms that are absent from sliding sync.
+            var failures = 0
+            while !Task.isCancelled {
+                do {
+                    let response = try await client.syncOnceV2(settings: .init(timeoutMs: 20_000))
+                    guard !Task.isCancelled else { return }
+                    await self?.didSync(client, changedRooms: !response.rooms.joined.isEmpty || !response.rooms.left.isEmpty)
+                    failures = 0
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    await self?.didFailSync(client)
+                    failures = min(failures + 1, 5)
+                    try? await Task.sleep(for: .seconds(failures * 2))
+                }
+            }
+        }
+    }
+
+    private func didSync(_ client: Client, changedRooms: Bool) {
+        guard self.client === client else { return }
+        if !hasSynced {
+            Self.logger.notice("Beeper initial sync finished")
+        }
+        hasSynced = true
+        syncFailed = false
+        needsRoomScan = needsRoomScan || changedRooms
+    }
+
+    private func didFailSync(_ client: Client) {
+        guard self.client === client, !syncFailed else { return }
+        syncFailed = true
+        Self.logger.error("Beeper sync request failed")
     }
 
     private func resetThread() {
@@ -208,20 +242,27 @@ actor InstagramInbox {
     private func allowedRoom(_ id: String, client: Client) async throws -> Room {
         try await refreshRoomIds(client)
         guard roomIds.contains(id), let room = try client.getRoom(roomId: id), room.membership() == .joined,
-              !room.isSpace(), await room.isEncrypted(), self.client === client else { throw InboxError.room }
+              !room.isSpace(), try await InstagramRoomDirectory.containsInstagramPortal(room),
+              await room.isEncrypted(), self.client === client else { throw InboxError.room }
         return room
     }
 
     private func refreshRoomIds(_ client: Client) async throws {
-        guard Date().timeIntervalSince(roomsCheckedAt) >= 60 else { return }
-        let ids = try await InstagramRoomDirectory.joinedRooms(accessToken: client.session().accessToken)
-        guard self.client === client else { throw InboxError.signIn }
-        if ids != roomIds {
-            try await sync?.roomListService().setRoomSubscriptions(roomIds: ids.sorted())
+        guard needsRoomScan else { return }
+        needsRoomScan = false
+        var ids: Set<String> = []
+        do {
+            for room in client.rooms() where room.membership() == .joined && !room.isSpace() {
+                if try await InstagramRoomDirectory.containsInstagramPortal(room) {
+                    ids.insert(room.id())
+                }
+            }
+        } catch {
+            if self.client === client { needsRoomScan = true }
+            throw InboxError.roomDirectory
         }
         guard self.client === client else { throw InboxError.signIn }
         roomIds = ids
-        roomsCheckedAt = Date()
     }
 
     private func date(_ timestamp: UInt64) -> String {
