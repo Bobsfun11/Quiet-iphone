@@ -2,7 +2,7 @@
   "expo": {
     "name": "Quiet",
     "slug": "quiet-social",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -10,13 +10,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quietsocial.personal",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Allow camera access only when you choose to capture a photo or video on YouTube.",
-        "NSMicrophoneUsageDescription": "Allow microphone access only when you choose to record on YouTube.",
-        "NSPhotoLibraryUsageDescription": "Choose a photo or video to share on YouTube.",
-        "NSPhotoLibraryAddUsageDescription": "Save a file when you choose to download it from YouTube."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "plugins": [

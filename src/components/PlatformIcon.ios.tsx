@@ -9,7 +9,8 @@ const nativeSymbols: Partial<Record<IconName, SFSymbol>> = {
   'refresh-cw': 'arrow.clockwise', 'rotate-cw': 'arrow.clockwise', 'rotate-ccw': 'arrow.counterclockwise',
   check: 'checkmark', heart: 'heart', home: 'house', info: 'info.circle', instagram: 'camera', lock: 'lock',
   'message-circle': 'bubble.left', monitor: 'desktopcomputer', music: 'music.note', shield: 'checkmark.shield',
-  sliders: 'slider.horizontal.3', sun: 'sun.max', x: 'xmark', youtube: 'play.rectangle', feather: 'leaf',
+  search: 'magnifyingglass', send: 'paperplane.fill', sliders: 'slider.horizontal.3',
+  sun: 'sun.max', x: 'xmark', feather: 'leaf',
 };
 
 export function Icon({ name, size = 20, color = colors.ink }: IconProps) {

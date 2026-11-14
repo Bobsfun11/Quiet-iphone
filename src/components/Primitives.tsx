@@ -25,12 +25,12 @@ export function IconButton({ icon, label, onPress, disabled = false, style }: {
   </Pressable>;
 }
 
-export function PrimaryButton({ title, onPress, icon = 'arrow-right' }: { title: string; onPress: () => void; icon?: IconName }) {
+export function PrimaryButton({ title, onPress, icon = 'arrow-right', disabled = false }: { title: string; onPress: () => void; icon?: IconName; disabled?: boolean }) {
   const [pressed, setPressed] = useState(false);
   const reduced = useReducedMotion();
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={() => { selectionHaptic(); onPress(); }}
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} disabled={disabled} accessibilityState={{ disabled }} onPress={() => { selectionHaptic(); onPress(); }}
     onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} pressRetentionOffset={16}>
-    <Animated.View style={[styles.primary, { opacity: pressed ? 0.88 : 1, transform: [{ scale: pressed && !reduced ? 0.97 : 1 }],
+    <Animated.View style={[styles.primary, { opacity: disabled ? 0.5 : pressed ? 0.88 : 1, transform: [{ scale: pressed && !reduced ? 0.97 : 1 }],
       transitionProperty: ['transform', 'opacity'], transitionDuration: reduced ? 0 : motion.press, transitionTimingFunction: pressEasing }]}>
       <Text style={styles.primaryText}>{title}</Text><Icon name={icon} color={colors.onAccent} size={19} />
     </Animated.View>

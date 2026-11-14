@@ -1,19 +1,14 @@
-import type { PlatformId } from './platforms';
-
 export type Preferences = {
   version: 1;
   onboarded: boolean;
-  launchInInbox: boolean;
-  desktop: Record<PlatformId, boolean>;
 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  version: 1, onboarded: false, launchInInbox: false,
-  desktop: { youtube: false },
+  version: 1, onboarded: false,
 };
 
 export function freshPreferences(): Preferences {
-  return { ...DEFAULT_PREFERENCES, desktop: { ...DEFAULT_PREFERENCES.desktop } };
+  return { ...DEFAULT_PREFERENCES };
 }
 
 export function parsePreferences(raw: string | null): Preferences {
@@ -24,8 +19,6 @@ export function parsePreferences(raw: string | null): Preferences {
     return {
       version: 1,
       onboarded: value.onboarded === true,
-      launchInInbox: value.launchInInbox === true,
-      desktop: { youtube: value.desktop?.youtube === true },
     };
   } catch { return freshPreferences(); }
 }

@@ -1,13 +1,13 @@
 import { PLATFORMS, type PlatformId } from './platforms';
 
-export type QuietLaunch = { platform: PlatformId; inbox: boolean };
+export type QuietLaunch = { platform: PlatformId };
 
-export function quietLaunchURL(platform: PlatformId, inbox = false): string {
-  return `quiet-social://open/${platform}${inbox ? '?view=inbox' : ''}`;
+export function quietLaunchURL(platform: PlatformId): string {
+  return `quiet-social://open/${platform}`;
 }
 
-// Shortcuts may select a platform and the inbox view; they cannot inject an
-// arbitrary website, disable filtering or send account/session information.
+// Existing Instagram and TikTok shortcuts can still open their native inboxes.
+// The view parameter is retained only for links created by earlier builds.
 export function parseQuietLaunch(raw: string | null): QuietLaunch | null {
   if (!raw || raw.length > 160) return null;
   try {
@@ -20,6 +20,6 @@ export function parseQuietLaunch(raw: string | null): QuietLaunch | null {
     if (keys.some(key => key !== 'view') || url.searchParams.getAll('view').length > 1) return null;
     const view = url.searchParams.get('view');
     if (view !== null && view !== 'inbox' && view !== 'home') return null;
-    return { platform, inbox: view === 'inbox' };
+    return { platform };
   } catch { return null; }
 }

@@ -3,25 +3,28 @@ import { ActivityIndicator, Linking, Platform, StyleSheet, Text, View } from 're
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import BrowserSurface from './src/components/BrowserSurface';
 import { PrimaryButton } from './src/components/Primitives';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { InboxScreen } from './src/screens/InboxScreen';
+import { InstagramSetupScreen } from './src/screens/InstagramSetupScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { freshPreferences, parsePreferences, type Preferences } from './src/model/preferences';
-import { getPlatform, type PlatformId } from './src/model/platforms';
+import type { PlatformId } from './src/model/platforms';
 import { colors } from './src/theme/tokens';
 import { parseQuietLaunch } from './src/model/launchLinks';
+import { instagramClient, instagramSession, type InstagramSession } from './src/model/instagramClient';
 
 const STORAGE_KEY = 'quiet.preferences.v1';
-type Screen = 'home' | 'settings' | PlatformId;
+type Screen = 'home' | 'settings' | 'instagram-setup' | PlatformId;
 
 function QuietApp() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [screen, setScreen] = useState<Screen>('home');
   const [launchNumber, setLaunchNumber] = useState(0);
-  const [shortcutInbox, setShortcutInbox] = useState(false);
   const [storageError, setStorageError] = useState(false);
+  const [account, setAccount] = useState<InstagramSession | null>(null);
+  const [accountCheckFailed, setAccountCheckFailed] = useState(false);
   const homeHasEntered = useRef(false);
   useEffect(() => {
     if (preferences?.onboarded && screen === 'home') homeHasEntered.current = true;
@@ -32,10 +35,8 @@ function QuietApp() {
     const receive = (raw: string | null) => {
       const target = parseQuietLaunch(raw);
       if (!active || !target) return;
-      setShortcutInbox(target.inbox);
       setScreen(target.platform);
-      // A second automation launch to the same platform starts at its entry
-      // again, rather than silently leaving an old page on screen.
+      // Reopening an inbox via a shortcut leaves any previously open thread.
       setLaunchNumber(number => number + 1);
     };
     const subscription = Linking.addEventListener('url', event => { receivedLiveURL = true; receive(event.url); });
@@ -56,18 +57,41 @@ function QuietApp() {
     }, 150);
     return () => clearTimeout(timer);
   }, [preferences]);
+  useEffect(() => {
+    if ((screen !== 'instagram' && screen !== 'instagram-setup') || !instagramSession) return;
+    let active = true;
+    setAccountCheckFailed(false);
+    void instagramSession.sessionStatus().then(status => { if (active) setAccount(status); })
+      .catch(() => { if (active) { setAccount(null); setAccountCheckFailed(true); } });
+    return () => { active = false; };
+  }, [screen, launchNumber]);
+
+  const instagramReason = !instagramSession ? 'Instagram account connections are available in the iPhone build.'
+    : accountCheckFailed ? 'Quiet couldn’t restore your Beeper session.' : undefined;
 
   return <View style={styles.outer}><SafeAreaView style={styles.app}>
     <StatusBar style="auto" />
     {storageError && <Text accessibilityRole="alert" style={styles.storageError}>Settings can’t be saved on this device right now.</Text>}
     {!preferences ? <View style={styles.center}><ActivityIndicator color={colors.green} /></View> :
       !preferences.onboarded ? <WelcomeScreen onContinue={() => setPreferences({ ...preferences, onboarded: true })} /> :
-      screen === 'home' ? <HomeScreen animateEntrance={!homeHasEntered.current} onOpen={id => { setShortcutInbox(false); setScreen(id); }} onSettings={() => setScreen('settings')} /> :
-      screen === 'settings' ? <SettingsScreen preferences={preferences} onChange={setPreferences} onBack={() => setScreen('home')}
+      screen === 'home' ? <HomeScreen animateEntrance={!homeHasEntered.current} onOpen={setScreen} onSettings={() => setScreen('settings')} /> :
+      screen === 'settings' ? <SettingsScreen onBack={() => setScreen('home')}
+        onInstagramSetup={instagramSession ? () => setScreen('instagram-setup') : undefined}
         onReset={() => { setScreen('home'); setPreferences(freshPreferences()); }} /> :
-      <BrowserSurface key={`${screen}-${launchNumber}`} platform={getPlatform(screen)} desktop={preferences.desktop[screen]}
-        launchInInbox={shortcutInbox || preferences.launchInInbox} onClose={() => setScreen('home')}
-        onToggleDesktop={() => setPreferences({ ...preferences, desktop: { ...preferences.desktop, [screen]: !preferences.desktop[screen] } })} />}
+      screen === 'instagram-setup' && (account || accountCheckFailed) ? <InstagramSetupScreen session={account ?? { state: 'signedOut' }} onSession={next => {
+        setAccount(next);
+        setAccountCheckFailed(false);
+        if (next.state === 'ready') setScreen('instagram');
+      }} onBack={() => setScreen('instagram')} /> :
+      screen === 'instagram-setup' || (screen === 'instagram' && instagramSession && !account && !accountCheckFailed)
+        ? <View style={styles.center}><ActivityIndicator color={colors.green} accessibilityLabel="Checking Instagram connection" /></View>
+        : <InboxScreen key={`${screen}-${launchNumber}`} platform={screen}
+          client={screen === 'instagram' && account?.state === 'ready' ? instagramClient : null}
+          connectionUnavailableReason={screen === 'tiktok'
+            ? 'Quiet does not have a working connection for personal TikTok messages yet.' : instagramReason}
+          connectionActionLabel={screen === 'instagram' && instagramSession
+            ? account?.state === 'verificationRequired' ? 'Verify Beeper session' : 'Connect Instagram' : undefined}
+          onClose={() => setScreen('home')} onSetup={() => setScreen('instagram-setup')} />}
   </SafeAreaView></View>;
 }
 
@@ -77,7 +101,7 @@ class AppBoundary extends Component<{ children: React.ReactNode }, { failed: boo
   render() {
     if (this.state.failed) return <View style={[styles.outer, styles.center, { padding: 32, gap: 20 }]}>
       <Text style={{ fontFamily: 'Georgia', fontSize: 30, color: colors.ink }}>Let’s take a breath.</Text>
-      <Text style={{ color: colors.muted, textAlign: 'center', lineHeight: 22 }}>Quiet ran into a problem. Restart the view to continue; your website sign-ins are kept.</Text>
+      <Text style={{ color: colors.muted, textAlign: 'center', lineHeight: 22 }}>Quiet ran into a problem. Restart the view to continue.</Text>
       <PrimaryButton title="Restart Quiet" icon="refresh-cw" onPress={() => this.setState({ failed: false })} />
     </View>;
     return this.props.children;

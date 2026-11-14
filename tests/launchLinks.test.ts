@@ -5,28 +5,30 @@ import { PLATFORMS } from '../src/model/platforms';
 
 test('each Shortcut link opens exactly its intended platform', () => {
   for (const platform of PLATFORMS) {
-    assert.deepEqual(parseQuietLaunch(quietLaunchURL(platform.id)), { platform: platform.id, inbox: false });
-    assert.deepEqual(parseQuietLaunch(quietLaunchURL(platform.id, true)), { platform: platform.id, inbox: true });
+    const url = quietLaunchURL(platform.id);
+    assert.deepEqual(parseQuietLaunch(url), { platform: platform.id });
+    assert.deepEqual(parseQuietLaunch(`${url}?view=inbox`), { platform: platform.id });
+    assert.deepEqual(parseQuietLaunch(`${url}?view=home`), { platform: platform.id });
   }
 });
-test('Shortcuts cannot inject website URLs or disable feed protection', () => {
+test('Shortcuts accept only supported inbox routes', () => {
   for (const url of [
-    'quiet-social://open/youtube?url=https://evil.example',
-    'quiet-social://open/youtube?filter=off',
-    'quiet-social://open/youtube?view=feed',
-    'quiet-social://open/youtube?view=inbox&view=home',
-    'quiet-social://open/youtube#untrusted',
+    'quiet-social://open/instagram?url=https://evil.example',
+    'quiet-social://open/instagram?filter=off',
+    'quiet-social://open/tiktok?view=feed',
+    'quiet-social://open/tiktok?view=inbox&view=home',
+    'quiet-social://open/instagram#untrusted',
     'quiet-social://open/not-a-platform',
-    'quiet-social://open/youtube/extra',
-    'https://open/youtube',
-    'quiet-social://evil.example/youtube',
-    'quiet-social://user:password@open/youtube',
+    'quiet-social://open/instagram/extra',
+    'https://open/tiktok',
+    'quiet-social://evil.example/instagram',
+    'quiet-social://user:password@open/tiktok',
     null, '', 'invalid', 'a'.repeat(161),
   ]) assert.equal(parseQuietLaunch(url), null, String(url));
 });
 
-test('automations for removed platforms cannot open a website', () => {
-  for (const platform of ['instagram', 'tiktok', 'snapchat']) {
+test('automations for YouTube and Snapchat no longer select a screen', () => {
+  for (const platform of ['youtube', 'snapchat']) {
     assert.equal(parseQuietLaunch(`quiet-social://open/${platform}`), null);
     assert.equal(parseQuietLaunch(`quiet-social://open/${platform}?view=inbox`), null);
   }

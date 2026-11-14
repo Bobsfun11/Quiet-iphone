@@ -7,13 +7,13 @@ import { QuietSprig } from '../components/QuietSprig';
 
 export function WelcomeScreen({ onContinue }: { onContinue: () => void }) {
   const steps: { icon: IconName; title: string; copy: string }[] = [
-    { icon: 'shield', title: 'Keep Shorts out', copy: 'Quiet filters Shorts on the YouTube website, including direct Shorts links.' },
-    { icon: 'lock', title: 'Sign in on YouTube', copy: 'Quiet has no account or server collecting your browsing.' },
+    { icon: 'message-circle', title: 'Choose an inbox', copy: 'Open Instagram or TikTok from your home screen.' },
+    { icon: 'lock', title: 'Account access', copy: 'A supported account connection is required to load or send messages.' },
   ];
   return <ScrollView contentContainerStyle={styles.content}>
     <Brand />
     <Reveal><View style={styles.hero}>
-      <Text accessibilityRole="header" style={styles.title}>YouTube with{"\n"}<Text style={styles.italic}>Shorts hidden.</Text></Text>
+      <Text accessibilityRole="header" style={styles.title}>Quiet{"\n"}<Text style={styles.italic}>inboxes.</Text></Text>
       <View style={styles.art}><QuietSprig settle /></View>
     </View></Reveal>
     <View style={styles.steps}>{steps.map((step, index) => <Reveal key={step.title} order={index + 1}><View style={styles.step}>
