@@ -19,7 +19,7 @@ On a Mac, install Node 24 LTS, Xcode 26.4 or newer, and CocoaPods. Run `bash Ins
 ## Connect Instagram
 
 1. In Beeper, go to **Settings → Accounts → Add an Account → Instagram** and choose **Beeper Cloud**. Use an authenticator app for Instagram two-factor authentication. [Beeper's Instagram instructions](https://help.beeper.com/instagram)
-2. Create a Matrix password for your Beeper account. [Beeper's password instructions](https://help.beeper.com/quick-references/how-can-i-reset-or-set-a-password)
+2. Save your Beeper recovery code from the profile menu. In Safari, open Element Web and select **Edit → Other account provider**. Enter `https://matrix.beeper.com`, tap **Continue → Forgot password?**, and send the reset link to your Beeper email. [Element Web sign-in](https://app.element.io/#/login) · [Beeper's password instructions](https://help.beeper.com/quick-references/how-can-i-reset-or-set-a-password)
 3. In Quiet, tap **Instagram → Connect Instagram** and enter your Beeper username and Matrix password. If prompted, use your Beeper recovery code. It is available from the profile menu in Beeper. [Beeper's iPhone setup instructions](https://help.beeper.com/en_US/ios/beeper-mobile-getting-started-guide)
 
 Beeper Cloud routes Instagram messages through its servers. Quiet sends Beeper credentials directly to Beeper, stores its session in the iPhone Keychain, and uses an encrypted local Matrix store. Disconnecting in Quiet clears its local store and session. Manage the Instagram connection itself in Beeper. [Beeper's connection types](https://help.beeper.com/en_US/troubleshooting/beeper-on-device-vs-beeper-cloud-what-goes-to-beeper-servers)

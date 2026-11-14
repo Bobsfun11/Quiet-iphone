@@ -5,7 +5,7 @@ import { instagramSession, type InstagramSession } from '../model/instagramClien
 import { colors } from '../theme/tokens';
 
 const ACCOUNT_GUIDE = 'https://help.beeper.com/instagram';
-const PASSWORD_GUIDE = 'https://help.beeper.com/quick-references/how-can-i-reset-or-set-a-password';
+const ELEMENT_WEB_SIGN_IN = 'https://app.element.io/#/login';
 const RECOVERY_GUIDE = 'https://help.beeper.com/en_US/ios/saving-your-beeper-recovery-code-on-beeper-ios';
 
 export function InstagramSetupScreen({ session, onSession, onBack }: {
@@ -83,7 +83,8 @@ export function InstagramSetupScreen({ session, onSession, onBack }: {
           <Text style={styles.copy}>Connect Instagram using Beeper Cloud, then create a Matrix password for your Beeper account.</Text>
           <View style={styles.guides}>
             <Pressable accessibilityRole="link" onPress={() => openGuide(ACCOUNT_GUIDE)} style={styles.linkButton}><Text style={styles.link}>Connect Instagram in Beeper</Text></Pressable>
-            <Pressable accessibilityRole="link" onPress={() => openGuide(PASSWORD_GUIDE)} style={styles.linkButton}><Text style={styles.link}>Create a Matrix password</Text></Pressable>
+            <Text style={styles.note}>In Element Web, edit the account provider to https://matrix.beeper.com. Tap Forgot password? and use your Beeper email.</Text>
+            <Pressable accessibilityRole="link" onPress={() => openGuide(ELEMENT_WEB_SIGN_IN)} style={styles.linkButton}><Text style={styles.link}>Open Element Web</Text></Pressable>
           </View>
           <Text style={styles.note}>Beeper Cloud processes Instagram messages to sync them to Quiet.</Text>
           <Text style={styles.label}>Beeper username or email</Text>
